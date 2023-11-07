@@ -65,7 +65,7 @@ Embed images using the following syntax.
 ![alt text for the image](image-url.jpg)
 ```
 
-![alt text for the image](https://de.wikipedia.org/wiki/Siemens#/media/Datei:Siemens-logo.svg)
+![alt text for the image](https://upload.wikimedia.org/wikipedia/commons/b/bf/Test_card.png)
 
 ## Code
 Add inline code with single backticks, and code blocks with triple backticks.
