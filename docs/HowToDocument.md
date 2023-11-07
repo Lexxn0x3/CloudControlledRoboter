@@ -28,7 +28,7 @@ nav_order: 1
 The `nav_order` determines the order of the page in the navigation.
 
 ## Nested Navigation
-To define a nested navigation structure using the front matter in your Markdown files for Just the Docs, you'll need to specify hierarchy keywords like parent, grand_parent, etc., to establish relationships between pages. Here's how you can do it:
+To define a nested navigation structure using the front matter in your Markdown files for Just the Docs, you'll need to specify hierarchy keywords like parent, grand_parent, etc., to establish relationships between pages. Parent also need to have a `has_children: true` Here's how you can do it:
 
 In your main page (e.g., docs.md), you might have:
 
@@ -36,6 +36,7 @@ In your main page (e.g., docs.md), you might have:
 ---
 layout: default
 title: Docs
+has_children: true
 nav_order: 1
 ---
 ```
@@ -46,6 +47,7 @@ For a child page (e.g., installation.md), you'll reference its parent:
 layout: default
 title: Installation
 parent: Docs
+has_children: true
 nav_order: 1
 ---
 ```
