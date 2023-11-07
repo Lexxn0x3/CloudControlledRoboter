@@ -1,7 +1,7 @@
 ---
 title: Markdown Tutorial
 layout: default
-parent: Howto document
+parent: How to document
 nav_order: 3
 ---
 
