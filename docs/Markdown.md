@@ -1,108 +1,137 @@
 ---
-layout: default
 title: "Markdown Tutorial"
+layout: default
 nav_order: 3
 ---
 
-# Markdown Tutorial for Documentation
-
-## Introduction
-
-Markdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents. Here's how to use Markdown to create content for your Just the Docs themed documentation.
+# Comprehensive Markdown Tutorial
 
 ## Headers
-
-Use `#` symbols in front of a word or phrase to create headers. The number of `#` symbols corresponds to the header level:
+Create headers by prefacing the text with one or more `#` symbols. The number of `#` you use determines the size of the header.
 
 ```markdown
 # Header 1
 ## Header 2
 ### Header 3
 #### Header 4
+##### Header 5
+###### Header 6
 ```
 
 ## Emphasis
-
-You can create bold or italic text:
+Emphasize text with bold or italics.
 
 ```markdown
-*This text will be italic*
-**This text will be bold**
+*italicized text*
+**bold text**
+***bold and italicized text***
 ```
 
 ## Lists
-
-For unordered lists, use asterisks, plus signs, or hyphens:
-
-```markdown
-- Item 1
-- Item 2
-- Item 3
-```
-
-For ordered lists, use numbers:
+Create ordered and unordered lists.
 
 ```markdown
-1. First item
-2. Second item
-3. Third item
+- Unordered list item 1
+- Unordered list item 2
+  - Nested unordered list item
+
+1. Ordered list item 1
+2. Ordered list item 2
+   1. Nested ordered list item
 ```
 
 ## Links
-
-Create a link by wrapping the link text in brackets `[ ]`, and the URL in parentheses `( )`:
+Include hyperlinks with text.
 
 ```markdown
 [GitHub](http://github.com)
 ```
 
 ## Images
-
-Add images by using the following syntax:
-
-```markdown
-![alt text](image.jpg)
-```
-
-## Code Blocks
-
-You can create fenced code blocks by wrapping your code in triple backticks ```:
+Embed images using the following syntax.
 
 ```markdown
-```
-This is a code block
-```
+![alt text for the image](image-url.jpg)
 ```
 
-Or indent your code with four spaces for an inline code block:
+## Code
+Add inline code with single backticks, and code blocks with triple backticks.
 
-    This is an inline code block
+```markdown
+`inline code`
+
+```
+# code block
+print('Hello, world!')
+```
+```
 
 ## Tables
-
-Create tables by using pipes `|` and hyphens `-`:
+Organize data into tables.
 
 ```markdown
-| Header 1 | Header 2 | Header 3 |
-| -------- | -------- | -------- |
-| Row 1    | Data     | Data     |
-| Row 2    | Data     | Data     |
+| Header 1    | Header 2    |
+| ----------- | ----------- |
+| Row 1 Col 1 | Row 1 Col 2 |
+| Row 2 Col 1 | Row 2 Col 2 |
 ```
 
 ## Blockquotes
-
-Use `>` to create blockquotes:
+Use blockquotes to quote text.
 
 ```markdown
 > This is a blockquote.
 ```
 
 ## Horizontal Rules
-
-Create a horizontal rule with three or more hyphens `---`:
+Create a horizontal line or page break.
 
 ```markdown
 ---
+```
+
+## Extended Syntax
+
+### Strikethrough
+```markdown
+~~Strikethrough text~~
+```
+
+### Fenced Code Blocks
+```markdown
+```
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "age": 25
+}
+```
+```
+
+### Footnotes
+Create a footnote like this.[^1]
+
+[^1]: This is the footnote.
+
+### Heading IDs
+```markdown
+### My Great Heading {#custom-id}
+```
+
+### Definition Lists
+```markdown
+term
+: definition
+
+term2
+: definition2
+```
+
+### Task Lists
+```markdown
+- [x] Write the press release
+- [ ] Update the website
+- [ ] Contact the media
 ```
 
 ## More
