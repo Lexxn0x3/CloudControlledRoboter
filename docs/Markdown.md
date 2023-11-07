@@ -1,5 +1,5 @@
 ---
-title: "Markdown Tutorial"
+title: Markdown Tutorial
 layout: default
 nav_order: 3
 ---
