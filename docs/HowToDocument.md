@@ -26,6 +26,41 @@ nav_order: 1
 
 The `nav_order` determines the order of the page in the navigation.
 
+## Nested Navigation
+To define a nested navigation structure using the front matter in your Markdown files for Just the Docs, you'll need to specify hierarchy keywords like parent, grand_parent, etc., to establish relationships between pages. Here's how you can do it:
+
+In your main page (e.g., docs.md), you might have:
+
+```yaml
+---
+layout: default
+title: Docs
+nav_order: 1
+---
+```
+For a child page (e.g., installation.md), you'll reference its parent:
+
+```yaml
+---
+layout: default
+title: Installation
+parent: Docs
+nav_order: 1
+---
+```
+If you have a sub-page under Installation (e.g., windows.md), you would reference both the parent and grandparent:
+
+```yaml
+---
+layout: default
+title: Windows Installation
+parent: Installation
+grand_parent: Docs
+nav_order: 1
+---
+```
+Adjust nav_order to set the order of pages within the same level of hierarchy. This front matter will tell Just the Docs how to construct your sidebar navigation by creating nested lists that reflect your documentation's structure.
+
 ## Write Content
 
 Below the front matter, write your documentation content using Markdown syntax. You can include headings, lists, links, images, code blocks, and other standard Markdown elements.
