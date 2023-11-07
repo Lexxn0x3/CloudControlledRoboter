@@ -40,12 +40,22 @@ Create ordered and unordered lists.
    1. Nested ordered list item
 ```
 
+- Unordered list item 1
+- Unordered list item 2
+  - Nested unordered list item
+
+1. Ordered list item 1
+2. Ordered list item 2
+   1. Nested ordered list item
+
 ## Links
 Include hyperlinks with text.
 
 ```markdown
 [GitHub](http://github.com)
 ```
+
+[GitHub](http://github.com)
 
 ## Images
 Embed images using the following syntax.
@@ -54,6 +64,8 @@ Embed images using the following syntax.
 ![alt text for the image](image-url.jpg)
 ```
 
+![alt text for the image](https://de.wikipedia.org/wiki/Siemens#/media/Datei:Siemens-logo.svg)
+
 ## Code
 Add inline code with single backticks, and code blocks with triple backticks.
 
@@ -61,6 +73,9 @@ Add inline code with single backticks, and code blocks with triple backticks.
 `inline code`
 
 ```
+
+`for i < 5`
+
 # code block
 print('Hello, world!')
 ```
@@ -76,12 +91,19 @@ Organize data into tables.
 | Row 2 Col 1 | Row 2 Col 2 |
 ```
 
+| Header 1    | Header 2    |
+| ----------- | ----------- |
+| Row 1 Col 1 | Row 1 Col 2 |
+| Row 2 Col 1 | Row 2 Col 2 |
+
 ## Blockquotes
 Use blockquotes to quote text.
 
 ```markdown
 > This is a blockquote.
 ```
+
+> This is a blockquote.
 
 ## Horizontal Rules
 Create a horizontal line or page break.
@@ -90,12 +112,16 @@ Create a horizontal line or page break.
 ---
 ```
 
+---
+
 ## Extended Syntax
 
 ### Strikethrough
 ```markdown
 ~~Strikethrough text~~
 ```
+
+~~Strikethrough text~~
 
 ### Fenced Code Blocks
 ```markdown
@@ -106,6 +132,14 @@ Create a horizontal line or page break.
   "age": 25
 }
 ```
+```
+
+```
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "age": 25
+}
 ```
 
 ### Footnotes
@@ -133,6 +167,10 @@ term2
 - [ ] Update the website
 - [ ] Contact the media
 ```
+
+- [x] Write the press release
+- [ ] Update the website
+- [ ] Contact the media
 
 ## More
 
