@@ -76,8 +76,13 @@ To define the structure of your documentation, use the front matter in each Mark
 
 After creating or updating your documentation, push the changes to GitHub. Your GitHub Actions workflow should automatically rebuild the site and publish it to GitHub Pages.
 
+## After Push
+
+If there are problems with the navigation you need to reload every navigation point.
+
 ## Local Testing (Optional)
 
 Before pushing to GitHub, you can test your site locally by running `bundle exec jekyll serve` and navigating to `localhost:4000` in your web browser.
 
 As you add more content, the Just the Docs theme will automatically generate a navigation structure based on your front matter and the `nav_order`. Your documentation will be styled according to the theme's design, and it will be responsive and searchable.
+
