@@ -2,7 +2,7 @@
 title: Laptop Setup
 layout: default
 parent: Setup
-nav_order: 3
+nav_order: 1
 ---
 
 # Linux Laptop Setup for ROSMASTER X3
