@@ -19,8 +19,8 @@ At the top of each Markdown file, include YAML front matter to specify layout an
 
 ```yaml
 ---
-layout: default
 title: Page Title
+layout: default
 nav_order: 1
 ---
 ```
@@ -34,8 +34,8 @@ In your main page (e.g., docs.md), you might have:
 
 ```yaml
 ---
-layout: default
 title: Docs
+layout: default
 has_children: true
 nav_order: 1
 ---
@@ -44,8 +44,8 @@ For a child page (e.g., installation.md), you'll reference its parent:
 
 ```yaml
 ---
-layout: default
 title: Installation
+layout: default
 parent: Docs
 has_children: true
 nav_order: 1
@@ -55,8 +55,8 @@ If you have a sub-page under Installation (e.g., windows.md), you would referenc
 
 ```yaml
 ---
-layout: default
 title: Windows Installation
+layout: default
 parent: Installation
 grand_parent: Docs
 nav_order: 1
