@@ -1,5 +1,6 @@
 ---
 title: LiDAR
 layout: default
-nav_order: 5
+parent: Testing
+nav_order: 2
 ---
