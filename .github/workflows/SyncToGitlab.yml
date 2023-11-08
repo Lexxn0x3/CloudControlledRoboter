@@ -3,7 +3,7 @@ name: Mirror to GitLab
 on:
   push:
     branches:
-      - dev
+      - '**'
 
 jobs:
   mirror:
@@ -16,4 +16,6 @@ jobs:
       uses: adambirds/sync-github-to-gitlab-action@v1.1.0
       with:
         destination_repository: git@code.siemens.com:robotgroup1/mainproject.git
+        destination_branch_name: dev
         destination_ssh_key: ${{ secrets.GITLAB_SSH_KEY }}
+
