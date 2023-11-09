@@ -1,5 +1,5 @@
 import socket
-import pandas as pd
+import json
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
@@ -16,8 +16,9 @@ sock.bind((ip_address, server_port))
 # Listen for incoming connections
 sock.listen(1)
 
-# Create a list to store the data
-data_list = []
+# Create lists to store the angles and distances
+angles = []
+distances = []
 
 # Set up the plot
 fig, ax = plt.subplots()
@@ -30,13 +31,18 @@ def update(i):
         # Receive the data in small chunks and add it to the list
         data = connection.recv(512)
         if data:
-            data_list.append(float(data.decode('utf-8')))
+            # Decode the data and convert it from JSON to a dictionary
+            data_dict = json.loads(data.decode('utf-8'))
+
+            # Extract the angle and distance and add them to the lists
+            angles.append(data_dict['angle'])
+            distances.append(data_dict['distance'])
 
             # Clear the current plot
             ax.clear()
 
             # Plot the new data
-            ax.plot(data_list)
+            ax.plot(angles, distances)
 
     finally:
         # Clean up the connection
