@@ -15,25 +15,42 @@ sock.bind((ip_address, server_port))
 # Listen for incoming connections
 sock.listen(1)
 
-# Create a pandas dataframe to store the distance data
-df = pd.DataFrame(columns=['Distance'])
-
-# Create a matplotlib figure
-fig, ax = plt.subplots()
-
-# Plot the distance data live
 while True:
+    # Wait for a connection
+    print('Waiting for a connection...')
+    connection, client_address = sock.accept()
 
-    # Wait for a new data point
-    data = sock.recv(512)
+    try:
+        print('Connection from', client_address)
 
-    # Add the new data point to the pandas dataframe
-    df.append({'Distance': float(data)}, ignore_index=True)
+        # Create a pandas dataframe to store the distance data
+        df = pd.DataFrame(columns=['Distance'])
 
-    # Update the matplotlib plot
-    ax.clear()
-    ax.plot(df['Distance'])
-    ax.set_title('Distance Measurements')
-    ax.set_xlabel('Sample Number')
-    ax.set_ylabel('Distance (m)')
-    fig.canvas.draw()
+        # Open a new window to show the live graph
+        fig, ax = plt.subplots()
+
+        # Plot the distance data live
+        while True:
+
+            # Receive a new data point
+            data = connection.recv(512)
+
+            # Add the new data point to the pandas dataframe
+            df.append({'Distance': float(data)}, ignore_index=True)
+
+            # Update the matplotlib plot
+            ax.clear()
+            ax.plot(df['Distance'])
+            ax.set_title('Distance Measurements')
+            ax.set_xlabel('Sample Number')
+            ax.set_ylabel('Distance (m)')
+            fig.canvas.draw()
+
+            plt.pause(0.05)
+
+    finally:
+        # Close the new window
+        plt.close(fig)
+
+        # Clean up the connection
+        connection.close()
