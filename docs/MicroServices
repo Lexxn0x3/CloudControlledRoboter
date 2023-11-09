@@ -1,8 +1,8 @@
 ---
 title: Micro Services
 layout: default
-has_children: true
 nav_order: 7
+has_children: true
 ---
 
 # Microservice Architecture Overview
