@@ -35,8 +35,14 @@ while True:
             # Receive a new data point
             data = connection.recv(512)
 
+            # Decode the incoming stream
+            data_decoded = data.decode('utf-8')
+
+            # Convert the decoded stream to a float
+            data_float = float(data_decoded)
+
             # Add the new data point to the pandas dataframe
-            df.append({'Distance': float(data)}, ignore_index=True)
+            df.append({'Distance': data_float}, ignore_index=True)
 
             # Update the matplotlib plot
             ax.clear()
