@@ -22,14 +22,10 @@ try:
             # Round the distance to the nearest whole number
             distance = round(distance)
 
-            # Create a dictionary with the angle and distance
-            data_dict = {'angle': angle, 'distance': distance}
+            # Send distance measurements to the server
+            data = {'angle': angle, 'distance': distance}
+            sock.sendall(json.dumps(data).encode('utf-8'))
 
-            # Convert the dictionary to a JSON string
-            data_json = json.dumps(data_dict)
-
-            # Send the JSON string to the server
-            sock.sendall(data_json.encode('utf-8'))
 finally:
     print('Stopping.')
     lidar.stop()

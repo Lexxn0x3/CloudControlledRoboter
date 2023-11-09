@@ -1,56 +1,47 @@
 import socket
-import json
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
+import json
 
-# Configure TCP server
+def animate(i):
+    # Connect to the sender socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((ip_address, port))
+
+    # Receive the data and decode it from JSON
+    data = s.recv(1024)
+    data_dict = json.loads(data.decode('utf-8'))
+
+    # Close the connection
+    s.close()
+
+    # Add the received data to the lists
+    angles.append(data_dict['angle'])
+    distances.append(data_dict['distance'])
+
+    # Plot the new data
+    line1.set_data(angles, distances)
+
+    # Limit the number of data points displayed on the graph
+    max_data_points = 100
+    if len(angles) > max_data_points:
+        angles.pop(0)
+        distances.pop(0)
+
+    return line1,
+
+# Replace with the sender's IP address and port
 ip_address = '192.168.8.103'
-server_port = 30002
+port = 30002
 
-# Create a TCP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+fig, ax = plt.subplots()
+ax.set_xlim(0, 360)
+ax.set_ylim(0, 5000)
 
-# Bind the socket to the port
-sock.bind((ip_address, server_port))
-
-# Listen for incoming connections
-sock.listen(1)
-
-# Create lists to store the angles and distances
 angles = []
 distances = []
 
-# Set up the plot
-fig, ax = plt.subplots()
+line1, = ax.plot([], [], 'r-')
 
-def update(i):
-    # Wait for a connection
-    connection, client_address = sock.accept()
-
-    try:
-        while True:
-            # Receive the data in small chunks and add it to the list
-            data = connection.recv(512)
-            if data:
-                # Decode the data and convert it from JSON to a dictionary
-                data_dict = json.loads(data.decode('utf-8'))
-
-                # Extract the angle and distance and add them to the lists
-                angles.append(data_dict['angle'])
-                distances.append(data_dict['distance'])
-
-                # Clear the current plot
-                ax.clear()
-
-                # Plot the new data
-                ax.plot(angles, distances)
-
-    except Exception as e:
-        print(f"Exception: {e}")
-        connection.close()
-
-# Set up the animation
-ani = FuncAnimation(fig, update, interval=1000)
-
-# Show the plot
+ani = animation.FuncAnimation(fig, animate, interval=1000, blit=True)
 plt.show()
