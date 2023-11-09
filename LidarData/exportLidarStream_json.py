@@ -24,7 +24,7 @@ try:
 
             # Send distance measurements to the server
             data = {'angle': angle, 'distance': distance}
-            sock.sendall(json.dumps(data).encode('utf-8'))
+            sock.sendall((json.dumps(data) + '\n').encode('utf-8'))
 
 finally:
     print('Stopping.')

@@ -27,13 +27,15 @@ while True:
         while True:
             data = connection.recv(1024)
             if data:
-                # Decode the JSON data and extract the distance and angle
-                data = json.loads(data.decode('utf-8'))
-                angle = data['angle']
-                distance = data['distance']
+                # Split the received data by newline and process each line as a separate JSON object
+                for line in data.splitlines():
+                    # Decode the JSON data and extract the distance and angle
+                    data = json.loads(line.decode('utf-8'))
+                    angle = data['angle']
+                    distance = data['distance']
 
-                # Print the distance measurement with the corresponding angle
-                print(f'Angle: {angle}, Distance: {distance}')
+                    # Print the distance measurement with the corresponding angle
+                    print(f'Angle: {angle}, Distance: {distance}')
             else:
                 break
             
