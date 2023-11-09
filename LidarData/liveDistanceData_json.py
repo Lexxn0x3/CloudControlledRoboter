@@ -38,7 +38,7 @@ while True:
                         # Print the distance measurement with the corresponding angle
                         print(f'Angle: {angle}, Distance: {distance}')
                     except json.JSONDecodeError:
-                        print('Failed to decode JSON object: ', line)
+                        #print('Failed to decode JSON object: ', line)
                         continue
             else:
                 break
