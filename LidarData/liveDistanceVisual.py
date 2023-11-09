@@ -1,6 +1,7 @@
 import socket
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 # Configure TCP server
 ip_address = '192.168.8.103'
@@ -15,48 +16,35 @@ sock.bind((ip_address, server_port))
 # Listen for incoming connections
 sock.listen(1)
 
-while True:
+# Create a DataFrame to store the data
+df = pd.DataFrame()
+
+# Set up the plot
+fig, ax = plt.subplots()
+
+def update(i):
     # Wait for a connection
-    print('Waiting for a connection...')
     connection, client_address = sock.accept()
 
     try:
-        print('Connection from', client_address)
+        # Receive the data in small chunks and add it to the DataFrame
+        data = connection.recv(512)
+        if data:
+            df_new = pd.read_csv(data, sep=',')
+            df = pd.concat([df, df_new])
 
-        # Create a pandas dataframe to store the distance data
-        df = pd.DataFrame(columns=['Distance'])
-
-        # Open a new window to show the live graph
-        fig, ax = plt.subplots()
-
-        # Plot the distance data live
-        while True:
-
-            # Receive a new data point
-            data = connection.recv(512)
-
-            # Decode the incoming stream
-            data_decoded = data.decode('utf-8')
-
-            # Convert the decoded stream to a float
-            data_float = float(data_decoded)
-
-            # Add the new data point to the pandas dataframe
-            df.append({'Distance': data_float}, ignore_index=True)
-
-            # Update the matplotlib plot
+            # Clear the current plot
             ax.clear()
-            ax.plot(df['Distance'])
-            ax.set_title('Distance Measurements')
-            ax.set_xlabel('Sample Number')
-            ax.set_ylabel('Distance (m)')
-            fig.canvas.draw()
 
-            plt.pause(0.05)
+            # Plot the new data
+            df.plot(ax=ax)
 
     finally:
-        # Close the new window
-        plt.close(fig)
-
         # Clean up the connection
         connection.close()
+
+# Set up the animation
+ani = FuncAnimation(fig, update, interval=1000)
+
+# Show the plot
+plt.show()
