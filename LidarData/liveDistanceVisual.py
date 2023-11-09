@@ -28,24 +28,25 @@ def update(i):
     connection, client_address = sock.accept()
 
     try:
-        # Receive the data in small chunks and add it to the list
-        data = connection.recv(512)
-        if data:
-            # Decode the data and convert it from JSON to a dictionary
-            data_dict = json.loads(data.decode('utf-8'))
+        while True:
+            # Receive the data in small chunks and add it to the list
+            data = connection.recv(512)
+            if data:
+                # Decode the data and convert it from JSON to a dictionary
+                data_dict = json.loads(data.decode('utf-8'))
 
-            # Extract the angle and distance and add them to the lists
-            angles.append(data_dict['angle'])
-            distances.append(data_dict['distance'])
+                # Extract the angle and distance and add them to the lists
+                angles.append(data_dict['angle'])
+                distances.append(data_dict['distance'])
 
-            # Clear the current plot
-            ax.clear()
+                # Clear the current plot
+                ax.clear()
 
-            # Plot the new data
-            ax.plot(angles, distances)
+                # Plot the new data
+                ax.plot(angles, distances)
 
-    finally:
-        # Clean up the connection
+    except Exception as e:
+        print(f"Exception: {e}")
         connection.close()
 
 # Set up the animation
