@@ -16,8 +16,8 @@ sock.bind((ip_address, server_port))
 # Listen for incoming connections
 sock.listen(1)
 
-# Create a DataFrame to store the data
-df = pd.DataFrame()
+# Create a list to store the data
+data_list = []
 
 # Set up the plot
 fig, ax = plt.subplots()
@@ -27,17 +27,16 @@ def update(i):
     connection, client_address = sock.accept()
 
     try:
-        # Receive the data in small chunks and add it to the DataFrame
+        # Receive the data in small chunks and add it to the list
         data = connection.recv(512)
         if data:
-            df_new = pd.read_csv(data, sep=',')
-            df = pd.concat([df, df_new])
+            data_list.append(float(data.decode('utf-8')))
 
             # Clear the current plot
             ax.clear()
 
             # Plot the new data
-            df.plot(ax=ax)
+            ax.plot(data_list)
 
     finally:
         # Clean up the connection
