@@ -29,13 +29,17 @@ while True:
             if data:
                 # Split the received data by newline and process each line as a separate JSON object
                 for line in data.splitlines():
-                    # Decode the JSON data and extract the distance and angle
-                    data = json.loads(line.decode('utf-8'))
-                    angle = data['angle']
-                    distance = data['distance']
+                    try:
+                        # Decode the JSON data and extract the distance and angle
+                        data = json.loads(line.decode('utf-8'))
+                        angle = data['angle']
+                        distance = data['distance']
 
-                    # Print the distance measurement with the corresponding angle
-                    print(f'Angle: {angle}, Distance: {distance}')
+                        # Print the distance measurement with the corresponding angle
+                        print(f'Angle: {angle}, Distance: {distance}')
+                    except json.JSONDecodeError:
+                        print('Failed to decode JSON object: ', line)
+                        continue
             else:
                 break
             
