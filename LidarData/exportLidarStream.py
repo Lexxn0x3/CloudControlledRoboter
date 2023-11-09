@@ -15,11 +15,17 @@ sock.connect((ip_address, server_port))
 lidar = RPLidar('/dev/rplidar')
 
 try:
-    print('Recording measurments... Press Ctrl+C to stop.')
-    for measurment in lidar.iter_measurments():
-        # Send data packet to the server
-        sock.sendall(str(measurment).encode('utf-8'))
+    print('Recording distance measurements... Press Ctrl+C to stop.')
+    for scan in lidar.iter_scans():
+        for (_, angle, distance) in scan:
+            # Extract distance measurements
+            distance_measurements = distance
+
+            # Send distance measurements to the server
+            sock.sendall(str(distance_measurements).encode('utf-8'))
 finally:
     print('Stopping.')
     lidar.stop()
     lidar.disconnect()
+
+
