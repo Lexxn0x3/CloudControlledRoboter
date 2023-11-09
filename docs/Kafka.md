@@ -1,7 +1,7 @@
 ---
 title: Kafka
 layout: default
-parent: MicroServices
+parent: Micro Services
 nav_order: 1
 ---
 
