@@ -1,24 +1,35 @@
 import socket
 
-#Confifure TCP Conection
-host = '192.168.8.10'
-port = 30002
+# Configure TCP server
+ip_address = '192.168.8.103'
+server_port = 30002
 
 # Create a TCP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Bind the socket to an address and port
-sock.bind(('host', port))
+# Bind the socket to the port
+sock.bind((ip_address, server_port))
 
 # Listen for incoming connections
 sock.listen(1)
 
-# Accept a connection from the client
-client_socket, address = sock.accept()
-
 while True:
-    # Receive data from the client
-    data = client_socket.recv(1024)
+    # Wait for a connection
+    print('Waiting for a connection...')
+    connection, client_address = sock.accept()
 
-    # Print the received data to the console
-    print(data)
+    try:
+        print('Connection from', client_address)
+
+        # Receive the data in small chunks and print it
+        while True:
+            data = connection.recv(512)
+            if data:
+                print('Received "%s"' % data)
+            else:
+                print('No more data from', client_address)
+                break
+
+    finally:
+        # Clean up the connection
+        connection.close()
