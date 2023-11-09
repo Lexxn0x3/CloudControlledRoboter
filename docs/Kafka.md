@@ -1,7 +1,8 @@
 ---
 title: Kafka
 layout: default
-nav_order: 7
+parent: MicroServices
+nav_order: 1
 ---
 
 ## Apache Kafka Overview
