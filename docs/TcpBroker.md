@@ -35,7 +35,7 @@ VideoDecode.py is a Python program that demonstrates how to connect to TcpBroker
 2. Start the VideoDecode.py with the client port and ip of the Broker (it will wait with decoding till it actually has a completed frame)
 3. Start the ffmpeg stream so it connects to the Broker on the receiving end (with the port)
 
-Now the ffmpeg tool should send a TCP MJPEG stream to the Broker which send it in return broadcasts it to all its clients. 
+Now the ffmpeg tool should send a TCP MJPEG stream to the Broker which in return broadcasts it to all its clients. 
 
 The VideoDecode.py will accumilate one frame and then save it as a file in the same Directory.
 
