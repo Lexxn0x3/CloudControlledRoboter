@@ -12,19 +12,19 @@ nav_order: 3
 3. Insert USB stick into Rosmaster X3
 
 ## Docker Contaier
-Run the command lsusb
+Run the command lsusb.
 ```yaml
 lsusb 
 ``` 
-Usually there are 2 Bus 001 devices without a name
+Usually there are two Bus 001 devices without a name.
 ![Alt text](image.png)
-in this case the devices are 008 and 010
+In this case the devices are 008 and 010.
 
-then run this command 
+Afterwards you need to run this command... 
 ```yaml
 vim run_docker.sh
 ``` 
-and change the last numbers accordingly
+...and change the last numbers accordingly.
 ```yaml
 -v /dev/bus/usb/001/008:/dev/bus/usb/001/008 \
 -v /dev/bus/usb/001/008:/dev/bus/usb/001/010 \

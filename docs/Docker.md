@@ -20,5 +20,5 @@ docker ps
 ```yaml
 docker exec -it <dockername> bash 
 ``` 
-You can autocomplet the dockername by pressing TAB
+You can autocomplete the dockername by pressing TAB
 
