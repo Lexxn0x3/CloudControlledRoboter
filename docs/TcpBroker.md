@@ -39,6 +39,12 @@ Now the ffmpeg tool should send a TCP MJPEG stream to the Broker which send it i
 
 The VideoDecode.py will accumilate one frame and then save it as a file in the same Directory.
 
+### 1080p Streams
+
+1080p Streams are not recommended the broker can handle them but they cause a significant load. Also does the current Test setup hick up with them due to some buffer issue at the VideoDecode part. Most likely at least.
+
+->720p it is :)
+
 ### Conclusion
 
 TcpBroker serves as the backbone of our microservices architecture, ensuring efficient and reliable communication between services and robots. It exemplifies the use of TCP for high-availability systems in a distributed environment.
