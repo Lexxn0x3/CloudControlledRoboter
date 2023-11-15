@@ -1,25 +1,25 @@
 use clap::{App, Arg};
 
-struct Config {
-    server_port: u16,
-    client_port: u16,
-    debug_level: String,
-    buffer_size: usize,
+pub struct Config {
+    pub server_port: u16,
+    pub client_port: u16,
+    pub debug_level: String,
+    pub buffer_size: usize,
 }
 
-fn parse_arguments() -> Config {
+pub fn parse_arguments() -> Config {
     let matches = App::new("My Program")
         .arg(Arg::with_name("server-port")
             .long("server-port")
             .help("Sets the server port")
             .takes_value(true)
-            .default_value("8080")
+            .default_value("3001")
             .validator(validate_port))
         .arg(Arg::with_name("client-port")
             .long("client-port")
             .help("Sets the client port")
             .takes_value(true)
-            .default_value("8081")
+            .default_value("4001")
             .validator(validate_port))
         .arg(Arg::with_name("debug-level")
             .long("debug-level")
@@ -45,7 +45,7 @@ fn parse_arguments() -> Config {
     }
 }
 
-fn validate_port(v: String) -> Result<(), String> {
+fn validate_port(v: &str) -> Result<(), String> {
     v.parse::<u16>()
         .map_err(|_| String::from("The port must be a number"))
         .and_then(|val| {
