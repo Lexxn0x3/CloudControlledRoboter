@@ -126,3 +126,6 @@ composer.lock
 # Add .dat files #
 ##################
 *.dat
+
+target/
+debug/
