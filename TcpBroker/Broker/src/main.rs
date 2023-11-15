@@ -7,6 +7,8 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::io::{self, Write};
 
+mod config;
+
 struct TrafficStats {
     bytes_received: usize,
     bytes_sent: HashMap<SocketAddr, usize>,
@@ -49,6 +51,8 @@ impl TrafficStats {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    let config = parse_arguments();
+
     let (tx, mut rx) = mpsc::channel::<Vec<u8>>(100);
     let stats = Arc::new(Mutex::new(TrafficStats::new()));
 
