@@ -72,9 +72,10 @@ async fn main() -> std::io::Result<()> {
     // Accept a single connection for receiving data
     let stats_for_reading = Arc::clone(&stats);
     let read_handle = tokio::spawn(async move {
-        let listener = TcpListener::bind("0.0.0.0:12345").await.unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", server_port)).await.unwrap();
+        println!("Server is running for receiving data on port: {}", server_port); // Print server start information
         if let Ok((mut socket, _)) = listener.accept().await {
-            let mut buf = [0u8; 4096];
+            let mut buf = vec![0u8; config.buffer_size]; // Create a buffer with the configured size
             loop {
                 match socket.read(&mut buf).await {
                     Ok(0) => break, // Connection was closed
@@ -92,7 +93,8 @@ async fn main() -> std::io::Result<()> {
     // Accept multiple connections for sending data
     let stats_for_writing = Arc::clone(&stats);
     let write_handle = tokio::spawn(async move {
-        let listener = TcpListener::bind("0.0.0.0:54321").await.unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", client_port)).await.unwrap();
+        println!("Server is running for sending data on port: {}", client_port); // Print server start information
         let client_map = Arc::new(Mutex::new(HashMap::<SocketAddr, TcpStream>::new()));
 
         // Accept new clients and store them in a HashMap
