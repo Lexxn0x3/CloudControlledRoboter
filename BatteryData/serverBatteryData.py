@@ -3,7 +3,7 @@ import json
 
 
 # Define the server address and port
-server_address = ('192.168.8.103', 30003)
+server_address = ('192.168.8.103', 30004)
 
 # Create a TCP socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
