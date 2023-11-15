@@ -1,18 +1,18 @@
-use tokio::net::{TcpListener, TcpStream};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::sync::{mpsc, Mutex};
-use tokio::time::{self, Duration, Instant};
-use std::sync::Arc;
 use std::collections::HashMap;
-use std::net::SocketAddr;
 use std::io::{self, Write};
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::Instant;
+
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use std::io;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{mpsc, Mutex};
+use tokio::time::{self, Duration};
 use tui::backend::CrosstermBackend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::style::{Color, Modifier, Style};
-use tui::symbols;
-use tui::widgets::{Block, Borders, Gauge, List, ListItem, Paragraph, Widget};
+use tui::widgets::{Block, Borders, Gauge, List, ListItem, Paragraph};
 use tui::Terminal;
 
 mod config;
