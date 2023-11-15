@@ -1,13 +1,13 @@
 use clap::{App, Arg};
 
-struct Config {
+pub struct Config {
     pub server_port: u16,
     pub client_port: u16,
     pub debug_level: String,
     pub buffer_size: usize,
 }
 
-fn parse_arguments() -> Config {
+pub fn parse_arguments() -> Config {
     let matches = App::new("My Program")
         .arg(Arg::with_name("server-port")
             .long("server-port")
@@ -45,7 +45,7 @@ fn parse_arguments() -> Config {
     }
 }
 
-fn validate_port(v: String) -> Result<(), String> {
+fn validate_port(v: &str) -> Result<(), String> {
     v.parse::<u16>()
         .map_err(|_| String::from("The port must be a number"))
         .and_then(|val| {
