@@ -8,7 +8,12 @@ use std::net::SocketAddr;
 use std::io::{self, Write};
 
 mod config;
+mod ui;
+use ui::UI;
+mod statistics;
+use statistics::Statistics;
 
+/* 
 struct TrafficStats {
     bytes_received: usize,
     bytes_sent: HashMap<SocketAddr, usize>,
@@ -48,24 +53,29 @@ impl TrafficStats {
         self.last_print_time = Instant::now();
     }
 }
+*/
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let config = config::parse_arguments();
+    let stats = Arc::new(Mutex::new(Statistics::new()));
+    let mut ui = UI::new()?;
 
     let (tx, mut rx) = mpsc::channel::<Vec<u8>>(100);
     let stats = Arc::new(Mutex::new(TrafficStats::new()));
 
     // Periodically print statistics
-    let stats_for_printing = Arc::clone(&stats);
+    let stats_for_ui = Arc::clone(&stats);
     tokio::spawn(async move {
         let mut interval = time::interval(Duration::from_secs(5));
         loop {
             interval.tick().await;
-            print!("{esc}[2J{esc}[1;1H", esc = 27 as char); // Clear the console
-            let mut stats = stats_for_printing.lock().await;
-            stats.print_and_reset();
-            io::stdout().flush().unwrap();
+            let mut stats = stats_for_ui.lock().await;
+            let (received_throughput, sent_throughput) = stats.throughput(); // Get current throughput
+            
+            ui.data_throughput = received_throughput;
+
+            ui.draw()?;
         }
     });
 
@@ -118,7 +128,6 @@ async fn main() -> std::io::Result<()> {
                     disconnected.push(*addr); // Mark the client for removal
                 } else {
                     let mut stats = stats_for_writing.lock().await;
-                    stats.add_sent(*addr, data.len());
                 }
             }
 
@@ -131,6 +140,8 @@ async fn main() -> std::io::Result<()> {
 
     // Wait for both tasks to complete
     let _ = tokio::try_join!(read_handle, write_handle);
+
+    ui.cleanup()?;
 
     Ok(())
 }
