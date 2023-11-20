@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 jobs:
-  goreleaser:
+  autotag:
     runs-on: ubuntu-latest
     steps:
 
