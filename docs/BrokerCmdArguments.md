@@ -8,7 +8,7 @@ nav_order: 1
 # CMD Arguments
 
 ## Introduction
-This document outlines the steps required to start the Rust program and describes the command-line arguments it accepts.
+This document provides the necessary information to start the Rust program and details the command-line arguments it accepts. The program serves as a TCP server/client handler with UI for statistics and debugging.
 
 ## Requirements
 - Rust programming language (latest stable version recommended)
@@ -30,11 +30,14 @@ To start the program, navigate to the target/release directory and run:
 
 ## Command-Line Arguments
 The program accepts the following arguments:
-- `--config <PATH>`: Specify the path to the configuration file.
-- `--verbose`: Enable verbose output for debugging purposes.
-- `--help`: Display help information about the command-line arguments.
+- `--server-port <PORT>`: Sets the server port (default: 3001).
+- `--client-port <PORT>`: Sets the client port (default: 4001).
+- `--debug-level <LEVEL>`: Sets the debug level. Possible values are trace, debug, info, warn, error (default: info).
+- `--buffer-size <SIZE>`: Sets the buffer size in bytes (default: 4096).
 
-For detailed usage and more options, run:
+For example:
 ```bash
-./my_program --help
+./my_program --server-port 3001 --client-port 4001 --debug-level info --buffer-size 4096
 ```
+
+Replace `<PORT>`, `<LEVEL>`, and `<SIZE>` with your desired configurations.
