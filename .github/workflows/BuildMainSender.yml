@@ -1,9 +1,11 @@
 name: BuildMainSender
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_run:
+    workflows: ["AutoTag"]
+    types:
+      - completed
+
 
 permissions:
   contents: write
