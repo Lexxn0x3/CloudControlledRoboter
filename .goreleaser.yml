@@ -6,6 +6,7 @@ builds:
     ldflags:
       - -s -w -X {{.ModulePath}}/meta.Version={{.Version}} -X {{.ModulePath}}/meta.Commit={{.Commit}} -X {{.ModulePath}}/meta.BuildDate={{.Date}}
     dir: ./mainsendergo
+    binary: mainsendergo
 
 dockers:
     - goos: linux
