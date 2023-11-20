@@ -6,9 +6,12 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mattzi/mainsendergo/rplidar"
 )
 
 func handleCameraStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
@@ -17,7 +20,6 @@ func handleCameraStream(addr string, port string, doneChan chan struct{}, wg *sy
 	fmt.Printf("Starting ffmpeg on port %s\n", port)
 	cmd := exec.Command("ffmpeg", "-input_format", "mjpeg", "-i", "/dev/video0", "-c:v", "copy", "-f", "mjpeg", fmt.Sprintf("tcp://%s:%s", addr, port))
 
-	// Pipe the stdout and stderr of the ffmpeg command to the terminal
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -33,14 +35,65 @@ func handleCameraStream(addr string, port string, doneChan chan struct{}, wg *sy
 		} else {
 			fmt.Printf("ffmpeg exited normally on port %s\n", port)
 		}
-		close(doneChan) // Signal that the command has finished
+		close(doneChan)
 	}()
 
-	// Wait for the stop signal or command completion
 	<-doneChan
 	if cmd.Process != nil {
 		fmt.Printf("Stopping ffmpeg on port %s\n", port)
-		cmd.Process.Kill() // Attempt to kill the process if it's still running
+		cmd.Process.Kill()
+	}
+}
+
+func handleLidarStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", addr, port))
+	if err != nil {
+		fmt.Printf("Error connecting to LiDAR server at %s:%s: %v\n", addr, port, err)
+		return
+	}
+	defer conn.Close()
+
+	lidar := rplidar.NewRPLidar("/dev/rplidar", 115200, time.Second*3)
+	err = lidar.Connect()
+	if err != nil {
+		fmt.Println("Error connecting to RPLidar:", err)
+		return
+	}
+	defer lidar.Disconnect()
+
+	// Retrieve and print device information
+	info, err := lidar.GetInfo()
+	if err != nil {
+		fmt.Println("Error getting info: %v", err)
+		return
+	}
+	fmt.Printf("RPLidar Info: %+v\n", info)
+
+	time.Sleep(time.Second * 1)
+
+	measurements, err := lidar.IterMeasurements()
+	if err != nil {
+		fmt.Println("Error starting measurements:", err)
+		return
+	}
+
+	for {
+		select {
+		case measurement, ok := <-measurements:
+			if !ok {
+				return // Channel closed, end the loop
+			}
+			msg := fmt.Sprintf("{\"Angle\": %f, \"Distance\": %f}\n", measurement.Angle, measurement.Distance)
+			_, err := conn.Write([]byte(msg))
+			if err != nil {
+				fmt.Println("Error sending data to server:", err)
+				return
+			}
+		case <-doneChan:
+			return
+		}
 	}
 }
 
@@ -65,11 +118,9 @@ func main() {
 	cmdChan := make(chan string)
 	doneReadingChan := make(chan bool)
 
-	// Goroutine to read commands from the connection
 	go func() {
 		scanner := bufio.NewScanner(conn)
 		for {
-			// Set a deadline for the read operation
 			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 			if scanner.Scan() {
 				cmdChan <- scanner.Text()
@@ -82,30 +133,42 @@ func main() {
 					break
 				}
 			}
-			// Reset the error for the next iteration
 			scanner = bufio.NewScanner(conn)
 		}
 		close(doneReadingChan)
 	}()
 
-	var doneChan chan struct{}
+	var cameraDoneChan, lidarDoneChan chan struct{}
 
 	for {
 		select {
 		case cmd := <-cmdChan:
 			if strings.HasPrefix(strings.ToLower(cmd), "startstreams") {
 				port := strings.TrimSpace(cmd[len("startstreams"):])
-				doneChan = make(chan struct{})
-				wg.Add(1)
-				go handleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, doneChan, &wg)
+				lidarPort, err := strconv.Atoi(port)
+				if err != nil {
+					fmt.Println("Invalid port number for streams:", err)
+					continue
+				}
+				lidarPortStr := strconv.Itoa(lidarPort + 10) // Increment port number by 1 for LiDAR
+
+				cameraDoneChan = make(chan struct{})
+				lidarDoneChan = make(chan struct{})
+
+				wg.Add(2)
+				go handleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
+				go handleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
 			} else if strings.HasPrefix(strings.ToLower(cmd), "stopstreams") {
 				fmt.Println("Received stopstreams command")
-				if doneChan != nil {
-					close(doneChan) // Signal to stop the camera stream
-					wg.Wait()       // Wait for the stream handler to finish
-					fmt.Println("All streams stopped")
-					doneChan = make(chan struct{}) // Reinitialize the channel for future use
+				if cameraDoneChan != nil {
+					close(cameraDoneChan)
 				}
+				if lidarDoneChan != nil {
+					close(lidarDoneChan)
+				}
+				wg.Wait()
+				fmt.Println("All streams stopped")
+				cameraDoneChan, lidarDoneChan = nil, nil
 			}
 		case <-doneReadingChan:
 			return
