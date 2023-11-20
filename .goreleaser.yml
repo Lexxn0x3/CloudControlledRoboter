@@ -5,7 +5,7 @@ builds:
       - arm64
     ldflags:
       - -s -w -X {{.ModulePath}}/meta.Version={{.Version}} -X {{.ModulePath}}/meta.Commit={{.Commit}} -X {{.ModulePath}}/meta.BuildDate={{.Date}}
-    main: ./MainSendergo/main.go
+    dir: ./MainSendergo
 
 dockers:
     - goos: linux
