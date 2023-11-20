@@ -1,8 +1,11 @@
 name: Mirror to GitLab
 
 on:
-  - push
-  - delete
+  push:
+    branches:
+      - main
+      - dev
+  delete:
 
 jobs:
   mirror:
