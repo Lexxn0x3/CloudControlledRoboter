@@ -1,4 +1,4 @@
-name: goreleaser
+name: AutoTag
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 jobs:
-  goreleaser:
+  autotag:
     runs-on: ubuntu-latest
     steps:
 
@@ -23,7 +23,7 @@ jobs:
         run: bash ./mainsendergo/tagnew.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -42,7 +42,6 @@ jobs:
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           distribution: goreleaser
           version: latest
