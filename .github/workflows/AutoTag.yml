@@ -23,7 +23,3 @@ jobs:
         run: bash ./mainsendergo/tagnew.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          args: release -f .goreleaser.yml --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CGO_ENABLED: 0
