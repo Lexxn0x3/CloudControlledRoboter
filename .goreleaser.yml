@@ -11,6 +11,6 @@ dockers:
     - goos: linux
       goarch: arm64
       image_templates:
-      - ghcr.io/Lexxn0x3/RoboterTeam1:latest
-      - ghcr.io/Lexxn0x3/RoboterTeam1:{{ .Tag }}
-      dockerfile: ./mainsendergo/Dockerfile
+      - ghcr.io/lexxn0x3/roboterteam1:latest
+      - ghcr.io/lexxn0x3/roboterteam1:{{ .Tag }}
+      dockerfile: mainsendergo/Dockerfile
