@@ -1,10 +1,11 @@
 ---
 title: Infrastructure setup
 layout: default
-parent: Setup
+parent: MicroServices
 nav_order: 4
 ---
 
 # Infrastructure setup
 to be continued
+
 ![infraPicture](InfraSetup.png) 
