@@ -2,10 +2,10 @@
 title: Infrastructure setup
 layout: default
 parent: MicroServices
-nav_order: 4
+nav_order: 3
 ---
 
 # Infrastructure setup
 to be continued
 
-![infraPicture](InfraSetup.png) 
+![infraPicture](infraSetup.png) 
