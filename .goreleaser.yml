@@ -1,0 +1,10 @@
+project_name: mainsendergo
+builds:
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+    goarch:
+      - arm64
+    id: "mainsendergo"
+    dir: .
+    main: ./MattisDinge/MainSendergo/main.go
