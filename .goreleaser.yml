@@ -1,7 +1,3 @@
-before:
-  hooks:
-    - go mod tidy
-
 builds:
   - goos:
       - linux
@@ -17,5 +13,3 @@ dockers:
       image_templates:
       - ghcr.io/Lexxn0x3/RoboterTeam1:latest
       - ghcr.io/Lexxn0x3/RoboterTeam1:{{ .Tag }}
-      extra_files:
-        - config.yml
