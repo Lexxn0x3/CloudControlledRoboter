@@ -1,9 +1,9 @@
-name: goreleaser
+name: BuildMainSender
 
 on:
-  label:
-    types:
-      - created
+  push:
+    tags:
+      - '*'
 
 permissions:
   contents: write
