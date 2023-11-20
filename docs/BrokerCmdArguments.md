@@ -1,5 +1,5 @@
 ---
-title: Camera
+title: Arguments
 layout: default
 parent: TCP Broker
 nav_order: 1
