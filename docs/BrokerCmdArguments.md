@@ -1,3 +1,8 @@
+title: Camera
+layout: default
+parent: TCP Broker
+nav_order: 1
+---
 # CMD Arguments
 
 ## Introduction
