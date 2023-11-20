@@ -6,7 +6,7 @@ grand_parent: MicroServices
 nav_order: 1
 ---
 
-#CMD Arguments
+# CMD Arguments
 
 ## Introduction
 This document provides the necessary information to start the Rust program and details the command-line arguments it accepts. The program serves as a TCP server/client handler with UI for statistics and debugging.
