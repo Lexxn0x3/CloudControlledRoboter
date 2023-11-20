@@ -2,6 +2,8 @@ name: goreleaser
 
 on:
   push:
+    - main
+    - dev
 
 permissions:
   contents: write
@@ -11,6 +13,12 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
+    
+      - name: Create and Push Tag
+        run: bash ./mainsendergo/tagnew.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -26,11 +34,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create and Push Tag
-        run: bash ./mainsendergo/tagnew.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
