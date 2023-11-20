@@ -7,11 +7,3 @@ builds:
       - -s -w -X {{.ModulePath}}/meta.Version={{.Version}} -X {{.ModulePath}}/meta.Commit={{.Commit}} -X {{.ModulePath}}/meta.BuildDate={{.Date}}
     dir: ./mainsendergo
     binary: mainsendergo
-
-dockers:
-    - goos: linux
-      goarch: arm64
-      image_templates:
-      - ghcr.io/lexxn0x3/mainsender:latest
-      - ghcr.io/lexxn0x3/mainsender:{{ .Tag }}
-      dockerfile: mainsendergo/Dockerfile
