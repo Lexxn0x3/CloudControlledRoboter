@@ -2,8 +2,8 @@
 title: TCP Broker
 layout: default
 parent: MicroServices
-nav_order: 2
 has_children: true
+nav_order: 2
 ---
 
 # TcpBroker
