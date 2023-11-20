@@ -1,9 +1,7 @@
 name: goreleaser
 
 on:
-  label:
-    types:
-      - created
+  push:
 
 permissions:
   contents: write
@@ -28,6 +26,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and Push Tag
+        run: bash ./mainsendergo/tagnew.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
