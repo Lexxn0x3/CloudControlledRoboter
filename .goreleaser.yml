@@ -5,7 +5,7 @@ builds:
       - arm64
     ldflags:
       - -s -w -X {{.ModulePath}}/meta.Version={{.Version}} -X {{.ModulePath}}/meta.Commit={{.Commit}} -X {{.ModulePath}}/meta.BuildDate={{.Date}}
-    dir: ./MainSendergo
+    dir: ./mainsendergo
 
 dockers:
     - goos: linux
@@ -13,4 +13,4 @@ dockers:
       image_templates:
       - ghcr.io/Lexxn0x3/RoboterTeam1:latest
       - ghcr.io/Lexxn0x3/RoboterTeam1:{{ .Tag }}
-      dockerfile: ./Mainsendergo/Dockerfile
+      dockerfile: ./mainsendergo/Dockerfile
