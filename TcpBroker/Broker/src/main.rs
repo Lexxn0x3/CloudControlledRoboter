@@ -5,6 +5,10 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crossterm::{
+    execute,
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{mpsc, Mutex};
@@ -21,69 +25,38 @@ use ui::UI;
 mod statistics;
 use statistics::Statistics;
 
-/* 
-struct TrafficStats {
-    bytes_received: usize,
-    bytes_sent: HashMap<SocketAddr, usize>,
-    last_print_time: Instant,
-}
-
-impl TrafficStats {
-    fn new() -> Self {
-        Self {
-            bytes_received: 0,
-            bytes_sent: HashMap::new(),
-            last_print_time: Instant::now(),
-        }
-    }
-
-    fn add_received(&mut self, bytes: usize) {
-        self.bytes_received += bytes;
-    }
-
-    fn add_sent(&mut self, addr: SocketAddr, bytes: usize) {
-        *self.bytes_sent.entry(addr).or_insert(0) += bytes;
-    }
-
-    fn print_and_reset(&mut self) {
-        let time_elapsed = self.last_print_time.elapsed().as_secs_f64();
-        let received_speed = self.bytes_received as f64 / time_elapsed;
-        
-        println!("Received: {} bytes ({} bytes/sec)", self.bytes_received, received_speed);
-        for (addr, &bytes) in &self.bytes_sent {
-            let sent_speed = bytes as f64 / time_elapsed;
-            println!("Sent to {}: {} bytes ({} bytes/sec)", addr, bytes, sent_speed);
-        }
-        
-        // Reset statistics
-        self.bytes_received = 0;
-        self.bytes_sent.clear();
-        self.last_print_time = Instant::now();
-    }
-}
-*/
-
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let config = config::parse_arguments();
     let stats = Arc::new(Mutex::new(Statistics::new()));
-    let mut ui = UI::new()?;
+
+    // Enter the alternate screen and clear it
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, terminal::Clear(terminal::ClearType::All))?;
+
+    // Wrap the UI in an Arc<Mutex<>> to share between contexts
+    let ui = Arc::new(Mutex::new(UI::new()?));
 
     let (tx, mut rx) = mpsc::channel::<Vec<u8>>(100);
-    let stats = Arc::new(Mutex::new(TrafficStats::new()));
 
     // Periodically print statistics
     let stats_for_ui = Arc::clone(&stats);
+    let ui_for_drawing = Arc::clone(&ui);
     tokio::spawn(async move {
         let mut interval = time::interval(Duration::from_secs(5));
         loop {
             interval.tick().await;
+            let mut ui = ui_for_drawing.lock().await;
             let mut stats = stats_for_ui.lock().await;
+            
             let (received_throughput, sent_throughput) = stats.throughput(); // Get current throughput
             
             ui.data_throughput = received_throughput;
 
-            ui.draw()?;
+            if let Err(e) = ui.draw()
+            {
+                eprintln!("Error drawing UI: {}", e);
+            }
         }
     });
 
@@ -100,6 +73,8 @@ async fn main() -> std::io::Result<()> {
                     Ok(n) => {
                         let mut stats = stats_for_reading.lock().await;
                         stats.add_received(n);
+                        stats.set_buffer_size(buf.len());
+                        stats.set_buffer_usage(n);
                         tx.send(buf[..n].to_vec()).await.unwrap();
                     }
                     Err(e) => eprintln!("Failed to read from socket: {:?}", e),
@@ -149,7 +124,13 @@ async fn main() -> std::io::Result<()> {
     // Wait for both tasks to complete
     let _ = tokio::try_join!(read_handle, write_handle);
 
-    ui.cleanup()?;
+    {
+        let mut ui = ui.lock().await;
+        ui.cleanup()?;
+
+        // Leave the alternate screen
+        execute!(io::stdout(), LeaveAlternateScreen)?;
+    }
 
     Ok(())
 }

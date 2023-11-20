@@ -78,7 +78,8 @@ impl UI {
             let debug_widget = List::new(debug)
                 .block(Block::default().borders(Borders::ALL).title("Debug"));
             f.render_widget(debug_widget, chunks[3]);
-        })
+        })?;
+        Ok(())
     }
 
     pub fn cleanup(&mut self) -> io::Result<()> {

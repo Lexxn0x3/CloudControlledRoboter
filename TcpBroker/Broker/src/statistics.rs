@@ -4,6 +4,8 @@ pub struct Statistics {
     bytes_received: usize,
     bytes_sent: usize,
     last_update: Instant,
+    buffer_size: usize,
+    buffer_usage: usize,
 }
 
 impl Statistics {
@@ -12,6 +14,8 @@ impl Statistics {
             bytes_received: 0,
             bytes_sent: 0,
             last_update: Instant::now(),
+            buffer_size: 0,
+            buffer_usage: 0,
         }
     }
 
@@ -21,6 +25,16 @@ impl Statistics {
 
     pub fn add_sent(&mut self, bytes: usize) {
         self.bytes_sent += bytes;
+    }
+
+    pub fn set_buffer_size(&mut self, bytes: usize)
+    {
+        self. buffer_size = bytes;
+    }
+
+    pub fn set_buffer_usage(&mut self, bytes: usize)
+    {
+        self.buffer_usage = bytes;
     }
 
     pub fn throughput(&mut self) -> (f64, f64) {

@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 clap = "3.0"
-tui = "0.16.0"
+tui = { version = "0.16.0", features = ["crossterm"] }
 crossterm = "0.22.0"
