@@ -20,7 +20,7 @@ jobs:
           override: true
 
       - name: Build Rust Binary
-        run: cargo build --release --target x86_64-unknown-linux-gnu
+        run: cargo build --release --target x86_64-unknown-linux-gnu --target-dir ./TcpBroker/Broker/target/release/
         working-directory: TcpBroker/Broker
 
       - name: Upload Rust Binary as Artifact
@@ -30,7 +30,7 @@ jobs:
           path: TcpBroker/Broker/target/release/Broker
           
       - name: List contents of the release directory
-        run: ls -R target/release/
+        run: ls -R TcpBroker/Broker/target/release/
           
   build-go:
     runs-on: ubuntu-latest
