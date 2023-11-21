@@ -4,8 +4,8 @@ pub struct Statistics {
     bytes_received: usize,
     bytes_sent: usize,
     last_update: Instant,
-    buffer_size: usize,
-    buffer_usage: usize,
+    pub buffer_size: usize,
+    pub buffer_usage: usize,
 }
 
 impl Statistics {

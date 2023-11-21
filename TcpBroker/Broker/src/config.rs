@@ -31,7 +31,7 @@ pub fn parse_arguments() -> Config {
             .long("buffer-size")
             .help("Sets the buffer size in bytes")
             .takes_value(true)
-            .default_value("4096")
+            .default_value("131072")
             .validator(|v| v.parse::<usize>()
                              .map(|_| ())
                              .map_err(|_| String::from("Buffer size must be an integer"))))

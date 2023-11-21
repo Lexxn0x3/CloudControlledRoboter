@@ -75,7 +75,7 @@ class MJPEGStreamDecoder:
 
 # Usage
 if __name__ == "__main__":
-    decoder = MJPEGStreamDecoder("10.18.40.167", 54321)
+    decoder = MJPEGStreamDecoder("192.168.178.41", 4001)
     decoder.connect()
     decoder.start_decoding()
     try:

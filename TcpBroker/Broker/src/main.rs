@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
     let stats_for_ui = Arc::clone(&stats);
     let ui_for_drawing = Arc::clone(&ui);
     tokio::spawn(async move {
-        let mut interval = time::interval(Duration::from_secs(5));
+        let mut interval = time::interval(Duration::from_millis(100));
         loop {
             interval.tick().await;
             let mut ui = ui_for_drawing.lock().await;
@@ -52,6 +52,8 @@ async fn main() -> std::io::Result<()> {
             let (received_throughput, sent_throughput) = stats.throughput(); // Get current throughput
             
             ui.data_throughput = received_throughput;
+            ui.buffer_size = config.buffer_size;
+            ui.buffer_usage = stats.buffer_usage;
 
             if let Err(e) = ui.draw()
             {
@@ -73,7 +75,6 @@ async fn main() -> std::io::Result<()> {
                     Ok(n) => {
                         let mut stats = stats_for_reading.lock().await;
                         stats.add_received(n);
-                        stats.set_buffer_size(buf.len());
                         stats.set_buffer_usage(n);
                         tx.send(buf[..n].to_vec()).await.unwrap();
                     }
