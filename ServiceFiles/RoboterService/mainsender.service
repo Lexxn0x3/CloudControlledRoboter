@@ -3,7 +3,9 @@ Description=Downloads the newest mainsender and executes it
 
 [Service]
 Type=simple
+ExecStartPre=/bin/chmod +x /opt/roboterteam1/downloadservice.sh
 ExecStart=/opt/roboterteam1/downloadservice.sh
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
