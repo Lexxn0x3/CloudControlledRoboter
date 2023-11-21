@@ -21,6 +21,7 @@ jobs:
 
       - name: Build Rust Binary
         run: cargo build --release --target i686-unknown-linux-gnu
+        working-directory: TcpBroker/Broker
 
       - name: Upload Rust Binary as Artifact
         uses: actions/upload-artifact@v2
@@ -41,6 +42,7 @@ jobs:
       - name: Build Go Binary
         run: |
           GOOS=linux GOARCH=arm64 go build -o my-go-binary ./path-to-go-main
+        working-directory: mainsendergo
 
       - name: Upload Go Binary as Artifact
         uses: actions/upload-artifact@v2
