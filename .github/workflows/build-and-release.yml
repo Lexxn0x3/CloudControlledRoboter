@@ -1,0 +1,86 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: i686-unknown-linux-gnu
+          override: true
+
+      - name: Build Rust Binary
+        run: cargo build --release --target i686-unknown-linux-gnu
+
+      - name: Upload Rust Binary as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: rust-binary
+          path: target/i686-unknown-linux-gnu/release/your-rust-binary-name
+  build-go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.x'
+      
+      - name: Build Go Binary
+        run: |
+          GOOS=linux GOARCH=arm64 go build -o my-go-binary ./path-to-go-main
+
+      - name: Upload Go Binary as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: go-binary
+          path: my-go-binary
+  create-release:
+    needs: [build-rust, build-go]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Rust Binary to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./your-rust-binary-name
+          asset_name: your-rust-binary-name
+          asset_content_type: application/octet-stream
+
+      - name: Upload Go Binary to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./my-go-binary
+          asset_name: my-go-binary
+          asset_content_type: application/octet-stream
