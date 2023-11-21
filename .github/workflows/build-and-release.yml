@@ -41,14 +41,14 @@ jobs:
       
       - name: Build Go Binary
         run: |
-          GOOS=linux GOARCH=arm64 go build -o my-go-binary ./path-to-go-main
+          GOOS=linux GOARCH=arm64 go build -o mainsendergo
         working-directory: mainsendergo
 
       - name: Upload Go Binary as Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: go-binary
-          path: my-go-binary
+          name: mainsendergo
+          path: mainsendergo
   create-release:
     needs: [build-rust, build-go]
     runs-on: ubuntu-latest
