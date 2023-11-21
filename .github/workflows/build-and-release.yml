@@ -28,6 +28,10 @@ jobs:
         with:
           name: rust-binary
           path: target/x86_64-unknown-linux-gnu/release/your-rust-binary-name
+          
+      - name: List contents of the release directory
+        run: ls -R target/x86_64-unknown-linux-gnu/release/
+          
   build-go:
     runs-on: ubuntu-latest
     steps:
