@@ -59,14 +59,17 @@ jobs:
     needs: [build-rust, build-go]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
       - name: Download all artifacts
         uses: actions/download-artifact@v2
-
+        
       - name: Calculate new tag
         id: newtag
         run: |
           git fetch --tags
-          latestTag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          latestTag=$(git tag -l | sort -V | tail -n1)
           echo "Latest tag: $latestTag"
           # Split the tag into major, minor, and patch numbers
           IFS='.' read -ra VERSION <<< "${latestTag//v/}"
