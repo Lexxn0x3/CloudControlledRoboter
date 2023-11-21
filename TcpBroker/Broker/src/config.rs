@@ -26,7 +26,7 @@ pub fn parse_arguments() -> Config {
             .help("Sets the debug level")
             .takes_value(true)
             .default_value("info")
-            .possible_values(&["trace", "debug", "info", "warn", "error"]))
+            .possible_values(&["trace", "debug", "info", "warn", "error", "none"]))
         .arg(Arg::with_name("buffer-size")
             .long("buffer-size")
             .help("Sets the buffer size in bytes")

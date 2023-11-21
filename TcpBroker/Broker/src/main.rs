@@ -31,36 +31,43 @@ async fn main() -> std::io::Result<()> {
     let stats = Arc::new(Mutex::new(Statistics::new()));
 
     // Enter the alternate screen and clear it
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, terminal::Clear(terminal::ClearType::All))?;
+    if config.debug_level != "none"
+    {
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen, terminal::Clear(terminal::ClearType::All))?;
+    }
 
     // Wrap the UI in an Arc<Mutex<>> to share between contexts
     let ui = Arc::new(Mutex::new(UI::new()?));
 
     let (tx, mut rx) = mpsc::channel::<Vec<u8>>(100);
 
-    // Periodically print statistics
-    let stats_for_ui = Arc::clone(&stats);
-    let ui_for_drawing = Arc::clone(&ui);
-    tokio::spawn(async move {
-        let mut interval = time::interval(Duration::from_millis(100));
-        loop {
-            interval.tick().await;
-            let mut ui = ui_for_drawing.lock().await;
-            let mut stats = stats_for_ui.lock().await;
-            
-            let (received_throughput, sent_throughput) = stats.throughput(); // Get current throughput
-            
-            ui.data_throughput = received_throughput;
-            ui.buffer_size = config.buffer_size;
-            ui.buffer_usage = stats.buffer_usage;
 
-            if let Err(e) = ui.draw()
-            {
-                eprintln!("Error drawing UI: {}", e);
+    if config.debug_level != "none"
+    {
+        // Periodically print statistics
+        let stats_for_ui = Arc::clone(&stats);
+        let ui_for_drawing = Arc::clone(&ui);
+        tokio::spawn(async move {
+            let mut interval = time::interval(Duration::from_millis(100));
+            loop {
+                interval.tick().await;
+                let mut ui = ui_for_drawing.lock().await;
+                let mut stats = stats_for_ui.lock().await;
+                
+                let (received_throughput, sent_throughput) = stats.throughput(); // Get current throughput
+                
+                ui.data_throughput = received_throughput;
+                ui.buffer_size = config.buffer_size;
+                ui.buffer_usage = stats.buffer_usage;
+
+                if let Err(e) = ui.draw()
+                {
+                    eprintln!("Error drawing UI: {}", e);
+                }
             }
-        }
-    });
+        });
+    }
 
     // Accept a single connection for receiving data
     let stats_for_reading = Arc::clone(&stats);
