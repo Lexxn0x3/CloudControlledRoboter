@@ -19,18 +19,21 @@ jobs:
           target: x86_64-unknown-linux-gnu
           override: true
 
+      - name: Create custom target directory
+        run: mkdir -p build/release
+
       - name: Build Rust Binary
-        run: cargo build --release --target x86_64-unknown-linux-gnu --target-dir ./target/x86_64-unknown-linux-gnu/release/
+        run: cargo build --release --target x86_64-unknown-linux-gnu --target-dir ./build/release/
         working-directory: TcpBroker/Broker
 
       - name: Upload Rust Binary as Artifact
         uses: actions/upload-artifact@v2
         with:
           name: rust-binary
-          path: target/x86_64-unknown-linux-gnu/release/Broker
+          path: build/release/Broker
           
       - name: List contents of the release directory
-        run: ls -R target/x86_64-unknown-linux-gnu/release/
+        run: ls -R build/release
           
   build-go:
     runs-on: ubuntu-latest
