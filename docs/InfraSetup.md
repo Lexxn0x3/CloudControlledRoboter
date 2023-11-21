@@ -8,4 +8,4 @@ nav_order: 3
 # Infrastructure setup
 to be continued
 
-![infraPicture](infraSetup.png) 
+![infraPicture](InfraSetup.png) 
