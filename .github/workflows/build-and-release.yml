@@ -30,7 +30,7 @@ jobs:
           path: TcpBroker/Broker/target/release/Broker
           
       - name: List contents of the release directory
-        run: ls -R TcpBroker/Broker/target/release/
+        run: ls -R target/release/
           
   build-go:
     runs-on: ubuntu-latest
