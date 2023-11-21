@@ -2,8 +2,11 @@ name: Build and Release Binaries
 
 on:
   push:
-    branches:
+    branches: 
       - main
+    paths:
+      - 'TcpBroker/**'
+      - 'mainsendergo/**'
 
 permissions:
   contents: write
