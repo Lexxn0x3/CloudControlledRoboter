@@ -9,6 +9,10 @@ has_children: true
 
 Our microservice architecture is designed to handle real-time data streams from various sensors, including cameras and LiDAR, process this data, and distribute it to other services within our ecosystem. Below is an outline of the architecture components and their roles:
 
+## Overview
+
+![Diagram for microservices](microservices.jpg)
+
 ## Core Components
 
 ### Data Ingestion Service

@@ -5,6 +5,8 @@ parent: MicroServices
 nav_order: 1
 ---
 
+# Obsolete
+
 ## Apache Kafka Overview
 
 Apache Kafka is a distributed streaming platform capable of handling high volumes of data efficiently. It's designed for publishing, subscribing to, storing, and processing streams of records in real time.
