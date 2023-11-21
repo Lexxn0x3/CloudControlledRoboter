@@ -64,10 +64,15 @@ jobs:
     
       - name: Download all artifacts
         uses: actions/download-artifact@v2
+
+      - name: Set execute permission for the script
+        run: chmod +x ./path/to/your-script.sh
         
       - name: Run Tagging Script
         id: create_tag
         run: ./tagnew.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Use New Tag
         run: |
