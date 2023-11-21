@@ -86,8 +86,8 @@ jobs:
       - name: Push new tag
         run: |
           git tag ${{ steps.newtag.outputs.tag }}
-          git push origin ${{ steps.newtag.outputs.tag }}
-            
+          git push https://${{ secrets.MY_PAT }}@github.com/${{ github.repository }} ${{ steps.newtag.outputs.tag }}
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
