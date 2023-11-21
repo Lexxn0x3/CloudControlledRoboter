@@ -64,31 +64,19 @@ jobs:
     
       - name: Download all artifacts
         uses: actions/download-artifact@v2
-        
-      - name: Calculate new tag
-        id: newtag
-        run: |
-          git fetch --tags
-          latestTag=$(git tag -l | sort -V | tail -n1)
-          echo "Latest tag: $latestTag"
-          # Split the tag into major, minor, and patch numbers
-          IFS='.' read -ra VERSION <<< "${latestTag//v/}"
-          MAJOR="${VERSION[0]}"
-          MINOR="${VERSION[1]}"
-          PATCH="${VERSION[2]}"
-          # Increment the patch version
-          NEW_PATCH=$(($PATCH + 1))
-          newTag="v$MAJOR.$MINOR.$NEW_PATCH"
-          echo "New tag: $newTag"
-          echo "::set-output name=tag::$newTag"
-        shell: bash
 
-      - name: Push new tag
+      - name: Set execute permission for the script
+        run: chmod +x ./tagnew.sh
+        
+      - name: Run Tagging Script
+        id: create_tag
+        run: ./tagnew.sh
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_PAT }}  # Replace with your secret name
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Use New Tag
         run: |
-          git tag ${{ steps.newtag.outputs.tag }}
-          git push https://${MY_PAT}@github.com/${{ github.repository }} ${{ steps.newtag.outputs.tag }}
+          echo "The new tag is ${{ steps.create_tag.outputs.tag }}"
 
       - name: Create Release
         id: create_release
@@ -96,8 +84,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PAT }}  # replace with your secret name
         with:
-          tag_name: ${{ steps.newtag.outputs.tag }}
-          release_name: Release ${{ steps.newtag.outputs.tag }}
+          tag_name: ${{ steps.create_tag.outputs.tag }}
+          release_name: Release ${{ steps.create_tag.outputs.tag }}
           draft: false
           prerelease: false
 
