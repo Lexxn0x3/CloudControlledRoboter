@@ -31,7 +31,7 @@ jobs:
         run: RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --manifest-path TcpBroker/Broker/Cargo.toml --target x86_64-unknown-linux-gnu --target-dir ./build/release/
 
       - name: Upload Rust Binary as Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: rust-binary
           path: build/release/x86_64-unknown-linux-gnu/release/Broker
