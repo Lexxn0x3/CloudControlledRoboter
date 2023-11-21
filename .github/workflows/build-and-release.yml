@@ -84,9 +84,11 @@ jobs:
         shell: bash
 
       - name: Push new tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_PAT }}  # Replace with your secret name
         run: |
           git tag ${{ steps.newtag.outputs.tag }}
-          git push https://${{ secrets.MY_PAT }}@github.com/${{ github.repository }} ${{ steps.newtag.outputs.tag }}
+          git push https://${GITHUB_TOKEN}@github.com/${{ github.repository }} ${{ steps.newtag.outputs.tag }}
 
       - name: Create Release
         id: create_release
