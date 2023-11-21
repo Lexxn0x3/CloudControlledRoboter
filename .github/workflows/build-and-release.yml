@@ -23,8 +23,7 @@ jobs:
         run: mkdir -p build/release
 
       - name: Build Rust Binary
-        run: cargo build --release --target x86_64-unknown-linux-gnu --target-dir ./build/release/
-        working-directory: TcpBroker/Broker
+        run: cargo build --release --manifest-path TcpBroker/Broker/Cargo.toml --target x86_64-unknown-linux-gnu --target-dir ./build/release/
 
       - name: Upload Rust Binary as Artifact
         uses: actions/upload-artifact@v2
