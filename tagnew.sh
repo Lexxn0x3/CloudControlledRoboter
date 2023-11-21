@@ -36,4 +36,4 @@ git push origin $new_tag
 
 echo "Tag $new_tag created and pushed successfully."
 
-echo "{tag}={$new_tag}" >> $GITHUB_OUTPUT
+echo "tag=$new_tag" >> $GITHUB_OUTPUT
