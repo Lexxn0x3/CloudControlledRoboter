@@ -1,11 +1,15 @@
 [Unit]
 Description=Downloads the newest Broker and executes it
+After=network.target
 
 [Service]
 Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/roboterteam1
 ExecStartPre=/bin/chmod +x /opt/roboterteam1/downloadservice.sh
 ExecStart=/opt/roboterteam1/downloadservice.sh %i
-Restart=on-failure
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
