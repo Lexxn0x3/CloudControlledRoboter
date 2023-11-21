@@ -1,8 +1,10 @@
+import os
 import socket
 import cv2
 import numpy as np
 from threading import Thread
 import time
+import uuid
 
 class MJPEGStreamDecoder:
     def __init__(self, ip, port):
@@ -13,6 +15,10 @@ class MJPEGStreamDecoder:
         self.running = False
         self.buffer = bytearray()
         self.frame_count = 0
+        self.identifier = uuid.uuid4().hex
+        self.save_path = f"./{self.identifier}"
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
 
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -57,7 +63,7 @@ class MJPEGStreamDecoder:
                 frame = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
                 if frame is not None:
                     self.frame_count += 1
-                    filename = f'frame_{self.frame_count}.jpg'
+                    filename = os.path.join(self.save_path, f'frame_{self.frame_count}.jpg')
                     cv2.imwrite(filename, frame)
                     print(f"Saved {filename}")
                 else:
