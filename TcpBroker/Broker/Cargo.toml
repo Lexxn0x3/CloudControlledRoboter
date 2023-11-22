@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-clap = "3.0"
-tui = { version = "0.16.0", features = ["crossterm"] }
-crossterm = "0.22.0"
+tokio = { version = "1", features = ["full"], default-features = false }
+clap = { version = "3.0", default-features = false }
+tui = { version = "0.16.0", features = ["crossterm"], default-features = false }
+crossterm = { version = "0.22.0", default-features = false }
+
+[build]
+rustflags = ["-C", "target-feature=+crt-static"]
