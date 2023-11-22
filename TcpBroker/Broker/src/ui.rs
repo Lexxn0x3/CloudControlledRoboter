@@ -5,8 +5,7 @@ use std::io;
 use tui::backend::CrosstermBackend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::style::{Color, Modifier, Style};
-use tui::symbols;
-use tui::widgets::{Block, Borders, Gauge, List, ListItem, Paragraph, Widget};
+use tui::widgets::{Block, Borders, Gauge, List, ListItem, Paragraph};
 use tui::Terminal;
 
 pub struct UI {

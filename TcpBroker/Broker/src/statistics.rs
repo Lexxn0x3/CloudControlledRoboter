@@ -23,15 +23,6 @@ impl Statistics {
         self.bytes_received += bytes;
     }
 
-    pub fn add_sent(&mut self, bytes: usize) {
-        self.bytes_sent += bytes;
-    }
-
-    pub fn set_buffer_size(&mut self, bytes: usize)
-    {
-        self. buffer_size = bytes;
-    }
-
     pub fn set_buffer_usage(&mut self, bytes: usize)
     {
         self.buffer_usage = bytes;

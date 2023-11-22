@@ -1,10 +1,7 @@
 use std::collections::HashMap;
-use std::io::{self, Write};
+use std::io;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::time::Instant;
-
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::{
     execute,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
@@ -13,11 +10,6 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::{self, Duration};
-use tui::backend::CrosstermBackend;
-use tui::layout::{Constraint, Direction, Layout};
-use tui::style::{Color, Modifier, Style};
-use tui::widgets::{Block, Borders, Gauge, List, ListItem, Paragraph};
-use tui::Terminal;
 
 mod config;
 mod ui;
@@ -54,9 +46,9 @@ async fn main() -> std::io::Result<()> {
                 interval.tick().await;
                 let mut ui = ui_for_drawing.lock().await;
                 let mut stats = stats_for_ui.lock().await;
-                
-                let (received_throughput, sent_throughput) = stats.throughput(); // Get current throughput
-                
+
+                let (received_throughput,_sent_throughput) = stats.throughput(); // Get current throughput
+
                 ui.data_throughput = received_throughput;
                 ui.buffer_size = config.buffer_size;
                 ui.buffer_usage = stats.buffer_usage;
@@ -92,7 +84,7 @@ async fn main() -> std::io::Result<()> {
     });
 
     // Accept multiple connections for sending data
-    let stats_for_writing = Arc::clone(&stats);
+    //let stats_for_writing = Arc::clone(&stats);
     let write_handle = tokio::spawn(async move {
         let listener = TcpListener::bind(format!("0.0.0.0:{}", config.client_port)).await.unwrap();
         println!("Server is running for sending data on port: {}", config.client_port); // Print server start information
@@ -117,8 +109,9 @@ async fn main() -> std::io::Result<()> {
                 if let Err(e) = socket.write_all(&data).await {
                     eprintln!("Failed to write to client {}: {}", addr, e);
                     disconnected.push(*addr); // Mark the client for removal
-                } else {
-                    let mut stats = stats_for_writing.lock().await;
+                } else
+                {
+                    //let mut stats = stats_for_writing.lock().await;
                 }
             }
 
@@ -131,7 +124,6 @@ async fn main() -> std::io::Result<()> {
 
     // Wait for both tasks to complete
     let _ = tokio::try_join!(read_handle, write_handle);
-
     {
         let mut ui = ui.lock().await;
         ui.cleanup()?;
@@ -139,6 +131,5 @@ async fn main() -> std::io::Result<()> {
         // Leave the alternate screen
         execute!(io::stdout(), LeaveAlternateScreen)?;
     }
-
     Ok(())
 }

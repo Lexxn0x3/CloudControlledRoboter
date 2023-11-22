@@ -129,3 +129,14 @@ composer.lock
 
 target/
 debug/
+
+# Rust.gitignore
+/target
+**/*.rs.bk
+
+Cargo.lock
+# If you're using Cargo, you might want to ignore these.
+# Uncomment the following lines if needed.
+/.cargo/
+!/.cargo/config
+/.env
