@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: rust-binary
-          path: build/release/x86_64-unknown-linux-gnu/release/Broker
+          path: build/release/x86_64-unknown-linux-gnu/release/broker
           
       - name: List contents of the release directory
         run: ls -R build/release
@@ -101,8 +101,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rust-binary/Broker
-          asset_name: Broker
+          asset_path: ./rust-binary/broker
+          asset_name: broker
           asset_content_type: application/octet-stream
 
       - name: Upload Go Binary to Release
