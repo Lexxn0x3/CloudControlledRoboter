@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1", features = ["full"], default-features = false }
-clap = { version = "3.0", default-features = false }
+clap = { version = "3.0", default-features = false, features = ["std"] }
 tui = { version = "0.16.0", features = ["crossterm"], default-features = false }
 crossterm = { version = "0.22.0", default-features = false }
 
