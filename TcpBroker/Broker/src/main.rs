@@ -13,6 +13,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time::{self, Duration};
+use tokio::spawn;
+use tokio::sync::mpsc::Receiver;
 use tui::backend::CrosstermBackend;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::style::{Color, Modifier, Style};
@@ -23,6 +25,7 @@ mod config;
 mod ui;
 use ui::UI;
 mod statistics;
+
 use statistics::Statistics;
 
 #[tokio::main]
@@ -92,44 +95,75 @@ async fn main() -> std::io::Result<()> {
     });
 
     // Accept multiple connections for sending data
-    let stats_for_writing = Arc::clone(&stats);
-    let write_handle = tokio::spawn(async move {
+    let client_map: Arc<Mutex<HashMap<SocketAddr, TcpStream>>> = Arc::new(Mutex::new(HashMap::new()));
+
+    // The listener task that accepts new connections
+    let client_map_for_accepting = Arc::clone(&client_map);
+    tokio::spawn(async move {
         let listener = TcpListener::bind(format!("0.0.0.0:{}", config.client_port)).await.unwrap();
-        println!("Server is running for sending data on port: {}", config.client_port); // Print server start information
-        let client_map = Arc::new(Mutex::new(HashMap::<SocketAddr, TcpStream>::new()));
+        println!("Server is running for sending data on port: {}", config.client_port);
 
-        // Accept new clients and store them in a HashMap
-        let client_map_clone = Arc::clone(&client_map);
-        tokio::spawn(async move {
-            loop {
-                if let Ok((socket, addr)) = listener.accept().await {
-                    client_map_clone.lock().await.insert(addr, socket);
+        loop {
+            match listener.accept().await {
+                Ok((socket, addr)) => {
+                    client_map_for_accepting.lock().await.insert(addr, socket);
+                    println!("New client: {}", addr);
                 }
-            }
-        });
-
-        // Read from the channel and write to all connected clients
-        while let Some(data) = rx.recv().await {
-            let mut clients = client_map.lock().await;
-            let mut disconnected = Vec::new(); // Track disconnected clients
-
-            for (addr, socket) in clients.iter_mut() {
-                if let Err(e) = socket.write_all(&data).await {
-                    eprintln!("Failed to write to client {}: {}", addr, e);
-                    disconnected.push(*addr); // Mark the client for removal
-                } else {
-                    let mut stats = stats_for_writing.lock().await;
-                }
-            }
-
-            // Remove disconnected clients
-            for addr in disconnected {
-                clients.remove(&addr);
+                Err(e) => eprintln!("Failed to accept client: {}", e),
             }
         }
     });
 
+
+    // The task that handles sending data to clients
+    let client_map_for_sending = Arc::clone(&client_map);
+    let disconnected = Arc::new(Mutex::new(Vec::new())); // Declare outside the loop
+
+    let sender = tokio::spawn(async move
+    {
+        while let Some(data) = rx.recv().await {
+            let mut clients = client_map_for_sending.lock().await;
+
+            // Collect the addresses to avoid holding the lock while spawning tasks
+            let addrs: Vec<SocketAddr> = clients.keys().cloned().collect();
+
+            for addr in addrs {
+                if let Some(mut stream) = clients.remove(&addr) { // Remove the stream to pass ownership to the task
+                    let data = data.clone(); // Clone the data for each task
+                    let disconnected_clone = Arc::clone(&disconnected); // Clone the Arc to share ownership of the Mutex
+
+                    tokio::spawn(async move {
+                        match time::timeout(Duration::from_millis(200), stream.write_all(&data)).await {
+                            Ok(result) => {
+                                if let Err(e) = result {
+                                    eprintln!("Failed to write to client {}: {}", addr, e);
+                                    let mut disconnected = disconnected_clone.lock().await;
+                                    disconnected.push(addr);
+                                }
+                            },
+                            Err(_) => {
+                                eprintln!("Write to client {} timed out", addr);
+                                let mut disconnected = disconnected_clone.lock().await;
+                                disconnected.push(addr);
+                            },
+                        }
+                    });
+                }
+            }
+
+            // Reinserting the streams back should be handled here,
+            // after all tasks have been spawned, or by the tasks themselves if they succeed.
+
+            // Handle disconnections here
+            // ...
+        }
+        // Disconnection handling loop goes here
+    });
+
+    sender.await.ok();
+
     // Wait for both tasks to complete
+    /*
     let _ = tokio::try_join!(read_handle, write_handle);
 
     {
@@ -139,6 +173,32 @@ async fn main() -> std::io::Result<()> {
         // Leave the alternate screen
         execute!(io::stdout(), LeaveAlternateScreen)?;
     }
+    */
 
     Ok(())
+}
+
+async fn WriteToAllClients(mut rx: Receiver<Vec<u8>>, stats_for_writing: Arc<Mutex<Statistics>>, client_map: Arc<Mutex<HashMap<SocketAddr, TcpStream>>>) {
+// Read from the channel and write to all connected clients
+    while let Some(data) = rx.recv().await
+    {
+        let mut clients = client_map.lock().await;
+        let mut disconnected = Vec::new(); // Track disconnected clients
+
+        for (addr, socket) in clients.iter_mut()
+        {
+            if let Err(e) = socket.write_all(&data).await
+            {
+                eprintln!("Failed to write to client {}: {}", addr, e);
+                disconnected.push(*addr); // Mark the client for removal
+            } else {
+                let mut stats = stats_for_writing.lock().await;
+            }
+        }
+
+        // Remove disconnected clients
+        for addr in disconnected {
+            clients.remove(&addr);
+        }
+    }
 }
