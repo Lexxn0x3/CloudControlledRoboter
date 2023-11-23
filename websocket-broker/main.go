@@ -5,9 +5,16 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+type Client struct {
+	conn *websocket.Conn
+	mu   sync.Mutex
+}
 
 var (
 	upgrader = websocket.Upgrader{
@@ -17,7 +24,7 @@ var (
 			return true
 		},
 	}
-	clients = make(map[*websocket.Conn]bool)
+	clients = make(map[*Client]bool)
 )
 
 func main() {
@@ -58,14 +65,15 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	log.Printf("WebSocket connection established: %s\n", ws.RemoteAddr())
-	clients[ws] = true
+	client := &Client{conn: ws}
+	clients[client] = true
 
 	// Infinite loop to keep the connection open
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {
 			log.Printf("WebSocket error from %s: %v\n", ws.RemoteAddr(), err)
-			delete(clients, ws)
+			delete(clients, client)
 			break
 		}
 	}
@@ -76,7 +84,7 @@ func readTCPStream(conn net.Conn) {
 	for scanner.Scan() {
 		//log.Println("Received data from TCP server.")
 		message := scanner.Bytes()
-		go broadcastToClients(message)
+		broadcastToClients(message)
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println("Error reading from TCP connection:", err)
@@ -84,13 +92,25 @@ func readTCPStream(conn net.Conn) {
 }
 
 func broadcastToClients(message []byte) {
-	//log.Printf("Broadcasting message to %d clients.\n", len(clients))
 	for client := range clients {
-		err := client.WriteMessage(websocket.BinaryMessage, message)
-		if err != nil {
-			log.Printf("Error broadcasting to client %s: %v\n", client.RemoteAddr(), err)
-			client.Close()
-			delete(clients, client)
-		}
+		go func(client *Client) {
+			client.mu.Lock()
+			defer client.mu.Unlock()
+
+			// Set a write deadline
+			err := client.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err != nil {
+				log.Printf("Error setting write deadline for client %s: %v\n", client.conn.RemoteAddr(), err)
+				return
+			}
+
+			// Send the message
+			err = client.conn.WriteMessage(websocket.BinaryMessage, message)
+			if err != nil {
+				log.Printf("Error broadcasting to client %s: %v\n", client.conn.RemoteAddr(), err)
+				client.conn.Close()
+				delete(clients, client)
+			}
+		}(client)
 	}
 }
