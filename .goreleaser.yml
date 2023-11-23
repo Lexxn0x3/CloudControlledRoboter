@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+before:
+  hooks:
+    - go mod tidy
+
+>>>>>>> Broker
 builds:
   - goos:
       - linux
@@ -5,5 +12,18 @@ builds:
       - arm64
     ldflags:
       - -s -w -X {{.ModulePath}}/meta.Version={{.Version}} -X {{.ModulePath}}/meta.Commit={{.Commit}} -X {{.ModulePath}}/meta.BuildDate={{.Date}}
+<<<<<<< HEAD
     dir: ./mainsendergo
     binary: mainsendergo
+=======
+    main: ./MattisDinge/MainSendergo/main.go
+
+dockers:
+    - goos: linux
+      goarch: arm64
+      image_templates:
+      - ghcr.io/Lexxn0x3/RoboterTeam1:latest
+      - ghcr.io/Lexxn0x3/RoboterTeam1:{{ .Tag }}
+      extra_files:
+        - config.yml
+>>>>>>> Broker

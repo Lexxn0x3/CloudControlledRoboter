@@ -22,5 +22,10 @@ jobs:
       uses: adambirds/sync-github-to-gitlab-action@v1.1.0
       with:
         destination_repository: git@code.siemens.com:robotgroup1/mainproject.git
+<<<<<<< HEAD
         destination_branch_name: main
+=======
+        destination_branch_name: dev
+>>>>>>> Broker
         destination_ssh_key: ${{ secrets.GITLAB_SSH_KEY }}
+
