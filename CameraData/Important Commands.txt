@@ -1,7 +1,0 @@
-ffmpeg -input_format mjpeg -i /dev/video0 -c:v copy -f mjpeg tcp://192.168.8.103:30001
-
-v4l2-ctl --device=/dev/video0 --set-fmt-video=width=1280,height=720,pixelformat=MJPG --set-parm=30
-
-v4l2-ctl --list-formats-ext
-
-v4l2-ctl --device=/dev/video0 --list-formats
