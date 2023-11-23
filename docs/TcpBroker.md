@@ -10,6 +10,10 @@ nav_order: 2
 
 The TcpBroker is a pivotal component within our microservice architecture that acts as a messaging hub for various services, including robotic operations. It utilizes TCP for reliable inter-service communication.
 
+## Information flow
+
+From Single connection to Multi Connection
+
 ## Architecture Overview
 
 TcpBroker facilitates the exchange of messages and data streams between services such as pathfinding and depth analysis, and robotic systems. It is designed to manage and route data streams effectively, ensuring that all components within the architecture communicate synchronously.
