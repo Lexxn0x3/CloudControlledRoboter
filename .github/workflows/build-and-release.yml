@@ -1,24 +1,49 @@
-name: Build and Release Binaries
+name: Build and Release
 
 on:
   push:
-    branches: 
+    branches:
       - main
     paths:
       - 'TcpBroker/**'
       - 'mainsendergo/**'
+      - 'websocket-broker/**'
 
 permissions:
   contents: write
   packages: write
-  
+
 jobs:
+  changes:
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      mainsendergo: ${{ steps.filter.outputs.mainsendergo }}
+      websocket-broker: ${{ steps.filter.outputs.websocket-broker }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            rust:
+              - 'TcpBroker/**'
+            mainsendergo:
+              - 'mainsendergo/**'
+            websocket-broker:
+              - 'websocket-broker/**'
+
   build-rust:
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+        with:
+          path: repository
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -27,44 +52,142 @@ jobs:
           target: x86_64-unknown-linux-gnu
           override: true
 
-      - name: Create custom target directory
-        run: mkdir -p build/release
-
       - name: Build Rust Binary
-        run: RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --manifest-path TcpBroker/Broker/Cargo.toml --target x86_64-unknown-linux-gnu --target-dir ./build/release/
+        run: |
+          mkdir -p build
+          RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --manifest-path repository/TcpBroker/Broker/Cargo.toml --target x86_64-unknown-linux-gnu --target-dir build/
 
-      - name: Upload Rust Binary as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: rust-binary
-          path: build/release/x86_64-unknown-linux-gnu/release/broker
-          
-      - name: List contents of the release directory
-        run: ls -R build/release
-          
-  build-go:
+      - name: Commit and Push Binary
+        run: |
+          cd repository
+          git reset --hard
+          git config --global user.email "mattzi@users.noreply.github.com"
+          git config --global user.name "Binary Builder"
+          git fetch origin binaries-branch
+          git switch binaries-branch || git switch -c binaries-branch origin/binaries-branch
+          rm ./build/broker
+          mv ../build/x86_64-unknown-linux-gnu/release/broker ./build/broker
+          git add ./build/broker
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update Rust binary"
+            git push -u origin binaries-branch
+          fi
+
+  build-mainsendergo:
+    needs: changes
+    if: ${{ needs.changes.outputs.mainsendergo == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+        with:
+          path: repository
+
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: '1.x'
-      
-      - name: Build Go Binary
-        run: |
-          GOOS=linux GOARCH=arm64 go build -o mainsendergo
-        working-directory: mainsendergo
 
-      - name: Upload Go Binary as Artifact
+      - name: Build Go Binary 1
+        run: |
+          cd repository/mainsendergo
+          mkdir -p ../../build
+          GOOS=linux GOARCH=arm64 go build -o ../../build/mainsendergo
+
+      - name: Commit and Push Binary
+        run: |
+          cd repository
+          git reset --hard
+          git config --global user.email "mattzi@users.noreply.github.com"
+          git config --global user.name "Binary Builder"
+          git fetch origin binaries-branch
+          git switch binaries-branch || git switch -c binaries-branch origin/binaries-branch
+          rm ./build/mainsendergo
+          mv ../build/mainsendergo ./build/mainsendergo
+          git add ./build/mainsendergo
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update mainsender binary"
+            git push -u origin binaries-branch
+          fi
+
+
+  build-websocket-broker:
+    needs: changes
+    if: ${{ needs.changes.outputs.websocket-broker == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: repository
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.x'
+
+      - name: Build Go Binary 2
+        run: |
+          cd repository/websocket-broker
+          mkdir -p ../../build
+          GOOS=linux go build -o ../../build/websocket-broker
+          
+      - name: Commit and Push Binary
+        run: |
+          cd repository
+          git reset --hard
+          git config --global user.email "mattzi@users.noreply.github.com"
+          git config --global user.name "Binary Builder"
+          git fetch origin binaries-branch
+          git switch binaries-branch || git switch -c binaries-branch origin/binaries-branch
+          rm ./build/websocket-broker
+          mv ../build/websocket-broker ./build/websocket-broker
+          git add ./build/websocket-broker
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update websocket binary"
+            git push -u origin binaries-branch
+          fi
+
+  prepare-binaries-for-release:
+    needs: [build-rust, build-mainsendergo, build-websocket-broker]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout binaries branch
+        uses: actions/checkout@v4
+        with:
+          ref: binaries-branch
+
+      - name: Upload Rust to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rust-binary
+          path: ./build/broker
+          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
+
+      - name: Upload mainsendergo to Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: mainsendergo
-          path: mainsendergo/mainsendergo
+          path: ./build/mainsendergo
+          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
+
+      - name: Upload websocket-broker to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: websocket-broker
+          path: ./build/websocket-broker
+          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
+
   create-release:
-    needs: [build-rust, build-go]
+    needs: prepare-binaries-for-release
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -73,7 +196,9 @@ jobs:
           fetch-depth: 0
     
       - name: Download all artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts/
 
       - name: Set execute permission for the script
         run: chmod +x ./tagnew.sh
@@ -84,33 +209,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_PAT }}  # replace with your secret name
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
+          token: ${{ secrets.MY_PAT }}
           tag_name: ${{ steps.create_tag.outputs.tag }}
-          release_name: Release ${{ steps.create_tag.outputs.tag }}
-          draft: false
-          prerelease: false
-          
-      - name: Upload Rust Binary to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_PAT }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rust-binary/broker
-          asset_name: broker
-          asset_content_type: application/octet-stream
-
-      - name: Upload Go Binary to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_PAT }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./mainsendergo/mainsendergo
-          asset_name: mainsendergo
-          asset_content_type: application/octet-stream
+          files: |
+            ./artifacts/rust-binary/broker
+            ./artifacts/mainsendergo/mainsendergo
+            ./artifacts/websocket-broker/websocket-broker
