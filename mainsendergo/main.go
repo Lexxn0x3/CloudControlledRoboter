@@ -4,98 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/mattzi/mainsendergo/rplidar"
 )
-
-func handleCameraStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	fmt.Printf("Starting ffmpeg on port %s\n", port)
-	cmd := exec.Command("ffmpeg", "-input_format", "mjpeg", "-i", "/dev/video0", "-c:v", "copy", "-f", "mjpeg", fmt.Sprintf("tcp://%s:%s", addr, port))
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Start(); err != nil {
-		fmt.Printf("Error starting camera stream on port %s: %v\n", port, err)
-		return
-	}
-
-	go func() {
-		err := cmd.Wait()
-		if err != nil {
-			fmt.Printf("ffmpeg exited with error on port %s: %v\n", port, err)
-		} else {
-			fmt.Printf("ffmpeg exited normally on port %s\n", port)
-		}
-		close(doneChan)
-	}()
-
-	<-doneChan
-	if cmd.Process != nil {
-		fmt.Printf("Stopping ffmpeg on port %s\n", port)
-		cmd.Process.Kill()
-	}
-}
-
-func handleLidarStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", addr, port))
-	if err != nil {
-		fmt.Printf("Error connecting to LiDAR server at %s:%s: %v\n", addr, port, err)
-		return
-	}
-	defer conn.Close()
-
-	lidar := rplidar.NewRPLidar("/dev/rplidar", 115200, time.Second*3)
-	err = lidar.Connect()
-	if err != nil {
-		fmt.Println("Error connecting to RPLidar:", err)
-		return
-	}
-	defer lidar.Disconnect()
-
-	// Retrieve and print device information
-	info, err := lidar.GetInfo()
-	if err != nil {
-		fmt.Println("Error getting info: %v", err)
-		return
-	}
-	fmt.Printf("RPLidar Info: %+v\n", info)
-
-	time.Sleep(time.Second * 1)
-
-	measurements, err := lidar.IterMeasurements()
-	if err != nil {
-		fmt.Println("Error starting measurements:", err)
-		return
-	}
-
-	for {
-		select {
-		case measurement, ok := <-measurements:
-			if !ok {
-				return // Channel closed, end the loop
-			}
-			msg := fmt.Sprintf("{\"Angle\": %f, \"Distance\": %f}\n", measurement.Angle, measurement.Distance)
-			_, err := conn.Write([]byte(msg))
-			if err != nil {
-				fmt.Println("Error sending data to server:", err)
-				return
-			}
-		case <-doneChan:
-			return
-		}
-	}
-}
 
 func main() {
 	ln, err := net.Listen("tcp", "0.0.0.0:6969")
@@ -117,13 +30,54 @@ func main() {
 	var wg sync.WaitGroup
 	cmdChan := make(chan string)
 	doneReadingChan := make(chan bool)
+	healthCheckChan := make(chan string)
+	stopChan := make(chan struct{})
+
+	// Health check routine
+	go func() {
+		var lastTimestamp int64
+		for {
+			select {
+			case <-time.After(12 * time.Second): // 10 seconds + 2 seconds grace period
+				fmt.Println("Health check failed. No message received in time.")
+				close(stopChan) // Signal to stop the program
+				return
+			case msg := <-healthCheckChan:
+				if strings.HasPrefix(msg, "healthcheck") {
+					fields := strings.Fields(msg)
+					if len(fields) < 2 {
+						fmt.Println("Invalid healthcheck message format")
+						continue
+					}
+					timestamp, err := strconv.ParseInt(fields[1], 10, 64)
+					if err != nil {
+						fmt.Println("Invalid timestamp in healthcheck message")
+						continue
+					}
+					if timestamp <= lastTimestamp {
+						fmt.Println("Received an old timestamp in healthcheck message")
+						continue
+					}
+					lastTimestamp = timestamp
+					fmt.Println("Health check passed")
+					// Reset the timer
+					time.After(12 * time.Second)
+				}
+			}
+		}
+	}()
 
 	go func() {
 		scanner := bufio.NewScanner(conn)
 		for {
 			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 			if scanner.Scan() {
-				cmdChan <- scanner.Text()
+				text := scanner.Text()
+				if strings.HasPrefix(text, "healthcheck") {
+					healthCheckChan <- text
+				} else {
+					cmdChan <- text
+				}
 			}
 
 			if err := scanner.Err(); err != nil {
@@ -132,13 +86,13 @@ func main() {
 					fmt.Println("Error reading from connection:", err)
 					break
 				}
+				scanner = bufio.NewScanner(conn) // Reset the scanner
 			}
-			scanner = bufio.NewScanner(conn)
 		}
 		close(doneReadingChan)
 	}()
 
-	var cameraDoneChan, lidarDoneChan chan struct{}
+	var cameraDoneChan, lidarDoneChan, batteryDoneChan chan struct{}
 
 	for {
 		select {
@@ -151,13 +105,16 @@ func main() {
 					continue
 				}
 				lidarPortStr := strconv.Itoa(lidarPort + 10) // Increment port number by 1 for LiDAR
+				batteryPortStr := strconv.Itoa(lidarPort + 20)
 
 				cameraDoneChan = make(chan struct{})
 				lidarDoneChan = make(chan struct{})
+				batteryDoneChan = make(chan struct{})
 
-				wg.Add(2)
-				go handleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
-				go handleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
+				wg.Add(3)
+				go streamhandlers.handleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
+				go streamhandlers.handleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
+				go streamhandlers.handleBatteryStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), batteryPortStr, cameraDoneChan, &wg)
 			} else if strings.HasPrefix(strings.ToLower(cmd), "stopstreams") {
 				fmt.Println("Received stopstreams command")
 				if cameraDoneChan != nil {
@@ -166,12 +123,40 @@ func main() {
 				if lidarDoneChan != nil {
 					close(lidarDoneChan)
 				}
+				if batteryDoneChan != nil {
+					close(lidarDoneChan)
+				}
 				wg.Wait()
 				fmt.Println("All streams stopped")
-				cameraDoneChan, lidarDoneChan = nil, nil
+				cameraDoneChan, lidarDoneChan, batteryDoneChan = nil, nil, nil
 			}
 		case <-doneReadingChan:
+			if cameraDoneChan != nil {
+				close(cameraDoneChan)
+			}
+			if lidarDoneChan != nil {
+				close(lidarDoneChan)
+			}
+			if batteryDoneChan != nil {
+				close(batteryDoneChan)
+			}
+
+			fmt.Println("Stopping program due to read done.")
 			return
+		case <-stopChan:
+			// Close the stream channels if they are not nil
+			if cameraDoneChan != nil {
+				close(cameraDoneChan)
+			}
+			if lidarDoneChan != nil {
+				close(lidarDoneChan)
+			}
+			if batteryDoneChan != nil {
+				close(batteryDoneChan)
+			}
+
+			fmt.Println("Stopping program due to health check failure.")
+			return // Exit the main function and thus the program
 		}
 	}
 
