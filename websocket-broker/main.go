@@ -5,9 +5,16 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+type Client struct {
+	conn  *websocket.Conn
+	mutex sync.Mutex
+}
 
 var (
 	upgrader = websocket.Upgrader{
@@ -17,11 +24,19 @@ var (
 			return true
 		},
 	}
-	clients = make(map[*websocket.Conn]bool)
+	clients     = make(map[*Client]bool)
+	clientMutex sync.Mutex
 )
 
 func main() {
 	log.Println("Starting server...")
+
+	ticker := time.NewTicker(30 * time.Second) // Adjust the interval as needed
+	go func() {
+		for range ticker.C {
+			printClients()
+		}
+	}()
 
 	// Set up a simple HTTP server
 	http.HandleFunc("/", handleConnections)
@@ -46,6 +61,16 @@ func main() {
 	select {} // Keep the main goroutine running
 }
 
+func printClients() {
+	clientMutex.Lock()
+	defer clientMutex.Unlock()
+
+	log.Printf("Current clients: %d", len(clients))
+	for client := range clients {
+		log.Printf("Client: %v", client.conn.RemoteAddr())
+	}
+}
+
 func handleConnections(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received new WebSocket connection request.")
 
@@ -57,24 +82,36 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
+	client := &Client{conn: ws}
+	clientMutex.Lock()
+	clients[client] = true
+	clientMutex.Unlock()
+
 	log.Printf("WebSocket connection established: %s\n", ws.RemoteAddr())
-	clients[ws] = true
 
 	// Infinite loop to keep the connection open
 	for {
-		_, _, err := ws.ReadMessage()
+		_, _, err := client.conn.ReadMessage()
 		if err != nil {
 			log.Printf("WebSocket error from %s: %v\n", ws.RemoteAddr(), err)
-			delete(clients, ws)
+			deleteClient(client)
 			break
 		}
 	}
 }
 
+func deleteClient(client *Client) {
+	clientMutex.Lock()
+	if _, ok := clients[client]; ok {
+		delete(clients, client)
+		client.conn.Close()
+	}
+	clientMutex.Unlock()
+}
+
 func readTCPStream(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
-		//log.Println("Received data from TCP server.")
 		message := scanner.Bytes()
 		go broadcastToClients(message)
 	}
@@ -84,13 +121,23 @@ func readTCPStream(conn net.Conn) {
 }
 
 func broadcastToClients(message []byte) {
-	//log.Printf("Broadcasting message to %d clients.\n", len(clients))
+	var disconnectedClients []*Client
+
+	clientMutex.Lock()
 	for client := range clients {
-		err := client.WriteMessage(websocket.BinaryMessage, message)
+		client.mutex.Lock()
+
+		err := client.conn.WriteMessage(websocket.BinaryMessage, message)
 		if err != nil {
-			log.Printf("Error broadcasting to client %s: %v\n", client.RemoteAddr(), err)
-			client.Close()
-			delete(clients, client)
+			disconnectedClients = append(disconnectedClients, client)
 		}
+
+		client.mutex.Unlock()
+	}
+	clientMutex.Unlock()
+
+	// Behandlung getrennter Clients
+	for _, client := range disconnectedClients {
+		deleteClient(client)
 	}
 }
