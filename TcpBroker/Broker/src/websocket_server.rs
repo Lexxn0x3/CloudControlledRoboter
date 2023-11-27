@@ -1,6 +1,6 @@
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
-use ws::{listen, Handler, Sender, Message, Result as WsResult, CloseCode};
+use ws::{listen, Handler, Sender, Message, Result as WsResult, CloseCode, };
 use log::{info, error, debug};
 
 // Define a WebSocket handler struct that will implement the Handler trait.

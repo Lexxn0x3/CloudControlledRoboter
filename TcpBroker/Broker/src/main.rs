@@ -9,14 +9,15 @@ use std::io::{Read, Write, Error};
 use std::sync::mpsc::{Receiver, Sender};
 use env_logger;
 use log::{info, error, debug};
-use env_logger::{Builder, Env};
-use ws;
+use env_logger::{Env};
+use ws::{Builder};
+use crate::config::Config;
 
 fn main() {
     let config = config::parse_arguments();
 
     // Initialize the logger with the specified level
-    Builder::from_env(Env::default().default_filter_or(config.debug_level)).init();
+    env_logger::Builder::from_env(Env::default().default_filter_or(config.debug_level)).init();
 
     let client_senders = Arc::new(Mutex::new(vec![]));
 
@@ -39,7 +40,7 @@ fn main() {
     let websocket_client_senders_clone = Arc::clone(&websocket_client_senders);
     let client_senders_clone = Arc::clone(&client_senders);
     thread::spawn(move || {
-        multi_connection_websocket_listener(client_senders_clone, websocket_client_senders_clone, config.websocket_port);
+        multi_connection_websocket_listener(client_senders_clone, websocket_client_senders_clone, config.websocket_port, config.websocket_frame_size);
     });
 
     // Main loop to keep the main thread alive
@@ -90,7 +91,11 @@ fn start_websocket_broadcast_thread(rx: Receiver<Vec<u8>>, websocket_client_send
 }
 
 // Your existing WebSocket server start function, now starts the broadcaster thread.
-fn multi_connection_websocket_listener(client_senders: Arc<Mutex<Vec<mpsc::Sender<Vec<u8>>>>>, websocket_client_senders: Arc<Mutex<Vec<ws::Sender>>>, port: u16) {
+fn multi_connection_websocket_listener(
+    client_senders: Arc<Mutex<Vec<mpsc::Sender<Vec<u8>>>>>,
+    websocket_client_senders: Arc<Mutex<Vec<ws::Sender>>>,
+    port: u16, websocket_frame_size: usize
+) {
     // Start a thread dedicated to broadcasting messages to WebSocket clients
     let (tx, rx) = mpsc::channel::<Vec<u8>>();
     start_websocket_broadcast_thread(rx, websocket_client_senders.clone());
@@ -101,16 +106,26 @@ fn multi_connection_websocket_listener(client_senders: Arc<Mutex<Vec<mpsc::Sende
         senders.push(tx);
     }
 
-    // Start the WebSocket server
-    if let Err(e) = ws::listen(format!("0.0.0.0:{}", port), move |out| {
-        // Add the new WebSocket client's sender to the list
-        websocket_client_senders.lock().unwrap().push(out.clone());
+    // Define the settings for the WebSocket server
+    let settings = ws::Settings {
+        max_fragment_size: websocket_frame_size,
+        ..ws::Settings::default()
+    };
 
+    // Create a builder with the specified settings
+    //let ws_builder = Builder::new().with_settings(settings);
+
+    // Closure that will be called to create a new WebSocketServer instance for each new connection
+    let ws_factory = move |out: ws::Sender| {
+        websocket_client_senders.lock().unwrap().push(out.clone());
         websocket_server::WebSocketServer {
-            out: out,
+            out,
             websocket_client_senders: websocket_client_senders.clone(),
         }
-    }) {
+    };
+
+    // Build the server and start listening
+    if let Err(e) = Builder::new().with_settings(settings).build(ws_factory).and_then(|server| server.listen(format!("0.0.0.0:{}", port))) {
         error!("Failed to start WebSocket server: {:?}", e);
     }
 }
