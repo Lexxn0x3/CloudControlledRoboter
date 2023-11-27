@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -41,11 +41,15 @@ func main() {
 
 	// Connect to the TCP server
 	log.Println("Connecting to TCP server at 127.0.0.1:9001...")
-	conn, err := net.Dial("tcp", "127.0.0.1:9001")
+	conn, err := net.Dial("tcp", "116.203.239.33:9001")
 	if err != nil {
 		log.Fatal("Connection to TCP server failed:", err)
 	}
 	defer conn.Close()
+	bufferSize := 2 * 1024 * 1024 * 100 // For example, setting a 2MB buffer
+	if err := conn.(*net.TCPConn).SetReadBuffer(bufferSize); err != nil {
+		log.Fatal("Failed to set read buffer size:", err)
+	}
 	log.Println("Connected to TCP server successfully.")
 
 	// Read from the TCP connection
@@ -80,20 +84,29 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 }
 
 func readTCPStream(conn net.Conn) {
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		//log.Println("Received data from TCP server.")
-		message := scanner.Bytes()
-		broadcastToClients(message)
-	}
-	if err := scanner.Err(); err != nil {
-		log.Println("Error reading from TCP connection:", err)
+	// Define a sufficiently large buffer based on your expected data rate and frame sizes
+	const bufferSize = 2097152 // Example size, adjust as needed
+	buffer := make([]byte, bufferSize)
+
+	for {
+		n, err := conn.Read(buffer)
+		if n > 0 {
+			// Only broadcast the actual number of bytes read
+			broadcastToClients(buffer[:n])
+		}
+
+		if err != nil {
+			if err != io.EOF {
+				log.Println("Error reading from TCP connection:", err)
+			}
+			break
+		}
 	}
 }
 
 func broadcastToClients(message []byte) {
 	for client := range clients {
-		go func(client *Client) {
+		func(client *Client) {
 			client.mu.Lock()
 			defer client.mu.Unlock()
 
