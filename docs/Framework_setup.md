@@ -35,10 +35,12 @@ Make sure you have the following tools installed:
 - **Node.js**
   - Install Node.js using the command: `winget install -e --id OpenJS.NodeJS`
   - Verify installation with:
+  
     ```bash
     $ node -v
     $ npm -v
     ```
+    
 - **Git**
 
 *LAR (Local Admin Rights) is recommended.*
@@ -66,23 +68,31 @@ All of the following commands are run within the my-app folder
 1. Create Your React Application
 2. Remove the web-vitals dependency
     -   Uninstall the web-vitals package
+      
         ```bash
         npm uninstall web-vitals
         ```
+        
     -   Delete the reportWebVitals.js file:
+      
         ```bash
         rm src/reportWebVitals.js
         ```
+        
     -   Remove the following lines from the src/index.js file:
+      
         ```bash
         import reportWebVitals from './reportWebVitals';
         reportWebVitals();
         ```
+        
 3. Install CRACO to Alter Your Webpack Configuration
+
     ```bash
     npm install @craco/craco
     ```
-4. Create a CRACO Configuration File
+    
+5. Create a CRACO Configuration File
    
     ```craco.config.js
     const nodeExternals = require("webpack-node-externals");
@@ -102,15 +112,20 @@ All of the following commands are run within the my-app folder
     ```
     
 6. Install webpack-node-externals
+
     ```bash
     npm install webpack-node-externals --save-dev
     ```
-7. Install Electron
+   
+8. Install Electron
+
     ```bash
     npm install electron --save-dev
     ```
-8. Create Your Electron Main Process File
+    
+10. Create Your Electron Main Process File
     -   Add the following code to a new file called electron.js in the public directory:
+      
         ```electron.js
         const electron = require("electron");
         const path = require("path");
@@ -139,25 +154,31 @@ All of the following commands are run within the my-app folder
         ```
 
     -   Add the following to your package.json file:
+   
         ```package.json
         "main": "public/electron.js",
         "homepage": "./",
         ```
+        
         This is the entry point for the Electron App
 
     -   Add custom start and build scripts
+      
         ```package.json
         "scripts": {
         "build": "craco build",
         "start": "electron ."
         },
         ```
-9. Run your App
+        
+11. Run your App
     To run your app, use te following commands
+    
     ```bash
     npm run build
     npm run start
     ```
+    
     You might want to add a custom script calling both commands:
 
     ```package.json
@@ -167,7 +188,9 @@ All of the following commands are run within the my-app folder
         "start": "electron ."
         },
     ```
+    
     run this command with:
+    
     ```bash 
     npm run build-start
     ```
@@ -182,11 +205,13 @@ Refer to the [Electron documentation](https://www.electronjs.org/de/docs/latest/
 Follow the [MUI - Joy UI Tutorial](https://mui.com/joy-ui/getting-started/installation/) for installation.
 
 1. Install MUI - Joy UI:
+
    ```bash
    npm install @mui/joy @emotion/react @emotion/styled
    ```
+   
    Don't forget to add dependencies to `package.json`.
-2. Download the required font.
+3. Download the required font.
 
 Additional installations:
 
