@@ -236,6 +236,22 @@ MUI & Joy UI use inter as default Font
 ```bash
 npm install @fontsource-variable/inter
 ```
+### Electron hot-reload
+
+install:
+
+```bash
+npm install -D electron-reloader
+```
+
+Add this line to the electron.js file:
+
+```bash
+try {
+  require('electron-reloader')(module)
+} catch (_) {}
+```
+Refer to the [Flavicopes Tutorial](https://flaviocopes.com/electron-hot-reload/) for more information.
 
 
 
