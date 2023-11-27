@@ -10,9 +10,6 @@ nav_order: 1
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Needed Tools](#needed-tools)
-   - [VScode](#vscode)
-   - [Node.js](#nodejs)
-   - [Git](#git)
 3. [Create-React-App](#create-react-app)
 4. [Using Electron](#using-electron)
    - [Project Initialization](#project-initialization)
@@ -86,6 +83,7 @@ All of the following commands are run within the my-app folder
     npm install @craco/craco
     ```
 4. Create a CRACO Configuration File
+   
     ```craco.config.js
     const nodeExternals = require("webpack-node-externals");
 
@@ -102,15 +100,16 @@ All of the following commands are run within the my-app folder
     },
     };
     ```
-5. Install webpack-node-externals
+    
+6. Install webpack-node-externals
     ```bash
     npm install webpack-node-externals --save-dev
     ```
-6. Install Electron
+7. Install Electron
     ```bash
     npm install electron --save-dev
     ```
-7. Create Your Electron Main Process File
+8. Create Your Electron Main Process File
     -   Add the following code to a new file called electron.js in the public directory:
         ```electron.js
         const electron = require("electron");
@@ -153,7 +152,7 @@ All of the following commands are run within the my-app folder
         "start": "electron ."
         },
         ```
-8. Run your App
+9. Run your App
     To run your app, use te following commands
     ```bash
     npm run build
