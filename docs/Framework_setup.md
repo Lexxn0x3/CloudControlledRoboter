@@ -13,15 +13,12 @@ nav_order: 1
 3. [Create-React-App](#create-react-app)
 4. [Using Electron](#using-electron)
    - [Project Initialization](#project-initialization)
-   - [Installing Electron](#installing-electron)
-5. [Using MUI - Joy UI](#using-mui-joy-ui)
-   - [Installation](#installation)
+   - [Run yor App](#run-your-app)
+5. [Using MUI - Joy UI](#using-mui---joy-ui)
 6. [Installing Extras](#installing-extras)
    - [VScode Extensions](#vscode-extensions)
    - [Font Installation](#font-installation)
-7. [React with Electron](#react-with-electron)
-   - [Setting up React](#setting-up-react)
-   - [Integration Tutorial](#integration-tutorial)
+   - [Electron hot-reload](#electron-hot-reload)
 
 ## Introduction
 
@@ -171,7 +168,7 @@ All of the following commands are run within the my-app folder
         },
         ```
         
-11. Run your App
+### Run your App
     To run your app, use te following commands
     
     ```bash
@@ -212,14 +209,6 @@ Follow the [MUI - Joy UI Tutorial](https://mui.com/joy-ui/getting-started/instal
    
    Don't forget to add dependencies to `package.json`.
 3. Download the required font.
-
-Additional installations:
-
-```bash
-npm install react react-dom
-npm install react-scripts
-npm install electron-builder cross-env --save-dev
-```
 
 ## Installing Extras
 
