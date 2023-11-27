@@ -3,6 +3,7 @@ use clap::{App, Arg};
 pub struct Config {
     pub single_connection_port: u16,
     pub multi_connection_port: u16,
+    pub websocket_port: u16,
     pub debug_level: String,
     pub buffer_size: usize,
 }
@@ -20,6 +21,12 @@ pub fn parse_arguments() -> Config {
             .help("Sets the multi connection port")
             .takes_value(true)
             .default_value("4001")
+            .validator(validate_port))
+        .arg(Arg::with_name("websocket-port")
+            .long("websocket-port")
+            .help("Sets the multi websocket port")
+            .takes_value(true)
+            .default_value("5001")
             .validator(validate_port))
         .arg(Arg::with_name("debug-level")
             .long("debug-level")
@@ -41,6 +48,7 @@ pub fn parse_arguments() -> Config {
     {
         single_connection_port: matches.value_of("single-connection-port").unwrap().parse().unwrap(),
         multi_connection_port: matches.value_of("multi-connection-port").unwrap().parse().unwrap(),
+        websocket_port: matches.value_of("websocket-port").unwrap().parse().unwrap(),
         debug_level: matches.value_of("debug-level").unwrap().to_string(),
         buffer_size: matches.value_of("buffer-size").unwrap().parse().unwrap(),
     }
