@@ -94,10 +94,9 @@ All of the following commands are run within the my-app folder
     npm install @craco/craco
     ```
     
-5. Create a CRACO Configuration File
+5. Create a CRACO Configuration File named craco.config.js
 
    
-       ```craco.config.js
        const nodeExternals = require("webpack-node-externals");
    
        module.exports = {
@@ -112,7 +111,6 @@ All of the following commands are run within the my-app folder
            },
        },
        };
-       ```
     
 6. Install webpack-node-externals
 
@@ -129,75 +127,73 @@ All of the following commands are run within the my-app folder
 10. Create Your Electron Main Process File
     -   Add the following code to a new file called electron.js in the public directory:
     
-           ```electron.js
-           const electron = require("electron");
-           const path = require("path");
-   
-           const app = electron.app;
-           const BrowserWindow = electron.BrowserWindow;
-   
-           let mainWindow;
-   
-           function createWindow() {
-           // Create the browser window.
-           mainWindow = new BrowserWindow({
-               width: 800,
-               height: 600,
-               webPreferences: { nodeIntegration: true, contextIsolation: false },
-           });
-           // and load the index.html of the app.
-           console.log(__dirname);
-           mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
-           }
-   
-           // This method will be called when Electron has finished
-           // initialization and is ready to create browser windows.
-           // Some APIs can only be used after this event occurs.
-           app.on("ready", createWindow);
-           ```
+           
+              const electron = require("electron");
+              const path = require("path");
+      
+              const app = electron.app;
+              const BrowserWindow = electron.BrowserWindow;
+      
+              let mainWindow;
+      
+              function createWindow() {
+              // Create the browser window.
+              mainWindow = new BrowserWindow({
+                  width: 800,
+                  height: 600,
+                  webPreferences: { nodeIntegration: true, contextIsolation: false },
+              });
+              // and load the index.html of the app.
+              console.log(__dirname);
+              mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
+              }
+      
+              // This method will be called when Electron has finished
+              // initialization and is ready to create browser windows.
+              // Some APIs can only be used after this event occurs.
+              app.on("ready", createWindow);
+              
         
 
     -   Add the following to your package.json file:
-   
-        ```package.json
-        "main": "public/electron.js",
-        "homepage": "./",
-        ```
+        
+              "main": "public/electron.js",
+              "homepage": "./",
+        
         
         This is the entry point for the Electron App
 
     -   Add custom start and build scripts
       
-        ```package.json
-        "scripts": {
-        "build": "craco build",
-        "start": "electron ."
-        },
-        ```
+              "scripts": {
+              "build": "craco build",
+              "start": "electron ."
+              },
         
 ### Run your App
-    To run your app, use te following commands
-    
-    ```bash
-    npm run build
-    npm run start
-    ```
-    
-    You might want to add a custom script calling both commands:
 
-    ```package.json
-    "scripts": {
-        "build-start": "craco build && electron ."
-        "build": "craco build",
-        "start": "electron ."
-        },
-    ```
-    
-    run this command with:
-    
-    ```bash 
-    npm run build-start
-    ```
+To run your app, use te following commands
+ 
+ ```bash
+ npm run build
+ npm run start
+ ```
+ 
+ You might want to add a custom script calling both commands:
+
+ ```package.json
+ "scripts": {
+     "build-start": "craco build && electron ."
+     "build": "craco build",
+     "start": "electron ."
+     },
+ ```
+ 
+ run this command with:
+ 
+ ```bash 
+ npm run build-start
+ ```
 
 
 Full tutorial on [MongoDB Realm SDK for Electron + CRA integration](https://www.mongodb.com/docs/realm/sdk/node/integrations/electron-cra/).
@@ -232,6 +228,7 @@ MUI & Joy UI use inter as default Font
 ```bash
 npm install @fontsource-variable/inter
 ```
+
 ### Electron hot-reload
 
 install:
@@ -247,6 +244,7 @@ try {
   require('electron-reloader')(module)
 } catch (_) {}
 ```
+
 Refer to the [Flavicopes Tutorial](https://flaviocopes.com/electron-hot-reload/) for more information.
 
 
