@@ -41,7 +41,7 @@ func main() {
 
 	// Connect to the TCP server
 	log.Println("Connecting to TCP server at 127.0.0.1:9001...")
-	conn, err := net.Dial("tcp", "116.203.239.33:9001")
+	conn, err := net.Dial("tcp", "127.0.0.1:9001")
 	if err != nil {
 		log.Fatal("Connection to TCP server failed:", err)
 	}
