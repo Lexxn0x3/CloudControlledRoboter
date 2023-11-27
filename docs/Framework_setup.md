@@ -30,7 +30,12 @@ Make sure you have the following tools installed:
 
 - **VScode**
 - **Node.js**
-  - Install Node.js using the command: `winget install -e --id OpenJS.NodeJS`
+  - Install Node.js using the command:
+
+      ```bash
+       winget install -e --id OpenJS.NodeJS
+      ```
+    
   - Verify installation with:
   
     ```bash
@@ -90,23 +95,24 @@ All of the following commands are run within the my-app folder
     ```
     
 5. Create a CRACO Configuration File
-   
-    ```craco.config.js
-    const nodeExternals = require("webpack-node-externals");
 
-    module.exports = {
-    webpack: {
-        configure: {
-        target: "electron-renderer",
-        externals: [
-            nodeExternals({
-            allowlist: [/webpack(\/.*)?/, "electron-devtools-installer"],
-            }),
-        ],
-        },
-    },
-    };
-    ```
+   
+       ```craco.config.js
+       const nodeExternals = require("webpack-node-externals");
+   
+       module.exports = {
+       webpack: {
+           configure: {
+           target: "electron-renderer",
+           externals: [
+               nodeExternals({
+               allowlist: [/webpack(\/.*)?/, "electron-devtools-installer"],
+               }),
+           ],
+           },
+       },
+       };
+       ```
     
 6. Install webpack-node-externals
 
@@ -122,33 +128,34 @@ All of the following commands are run within the my-app folder
     
 10. Create Your Electron Main Process File
     -   Add the following code to a new file called electron.js in the public directory:
-      
-        ```electron.js
-        const electron = require("electron");
-        const path = require("path");
-
-        const app = electron.app;
-        const BrowserWindow = electron.BrowserWindow;
-
-        let mainWindow;
-
-        function createWindow() {
-        // Create the browser window.
-        mainWindow = new BrowserWindow({
-            width: 800,
-            height: 600,
-            webPreferences: { nodeIntegration: true, contextIsolation: false },
-        });
-        // and load the index.html of the app.
-        console.log(__dirname);
-        mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
-        }
-
-        // This method will be called when Electron has finished
-        // initialization and is ready to create browser windows.
-        // Some APIs can only be used after this event occurs.
-        app.on("ready", createWindow);
-        ```
+    
+           ```electron.js
+           const electron = require("electron");
+           const path = require("path");
+   
+           const app = electron.app;
+           const BrowserWindow = electron.BrowserWindow;
+   
+           let mainWindow;
+   
+           function createWindow() {
+           // Create the browser window.
+           mainWindow = new BrowserWindow({
+               width: 800,
+               height: 600,
+               webPreferences: { nodeIntegration: true, contextIsolation: false },
+           });
+           // and load the index.html of the app.
+           console.log(__dirname);
+           mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
+           }
+   
+           // This method will be called when Electron has finished
+           // initialization and is ready to create browser windows.
+           // Some APIs can only be used after this event occurs.
+           app.on("ready", createWindow);
+           ```
+        
 
     -   Add the following to your package.json file:
    
