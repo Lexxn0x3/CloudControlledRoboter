@@ -12,7 +12,7 @@ import (
 	"github.com/mattzi/mainsendergo/rplidar"
 )
 
-func handleCameraStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
+func HandleCameraStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	fmt.Printf("Starting ffmpeg on port %s\n", port)
@@ -43,7 +43,7 @@ func handleCameraStream(addr string, port string, doneChan chan struct{}, wg *sy
 	}
 }
 
-func handleLidarStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
+func HandleLidarStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", addr, port))
@@ -95,7 +95,7 @@ func handleLidarStream(addr string, port string, doneChan chan struct{}, wg *syn
 	}
 }
 
-func handleBatteryStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
+func HandleBatteryStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", addr, port))

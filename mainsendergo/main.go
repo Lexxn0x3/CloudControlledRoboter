@@ -8,60 +8,78 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mattzi/mainsendergo/streamhandlers"
 )
 
 func main() {
 	ln, err := net.Listen("tcp", "0.0.0.0:6969")
 	if err != nil {
-		fmt.Println("Error setting up TCP server:", err)
+		logWithTimestamp("Error setting up TCP server:", err)
 		return
 	}
 	defer ln.Close()
-	fmt.Println("TCP server listening at 0.0.0.0:6969")
+	logWithTimestamp("TCP server listening at 0.0.0.0:6969")
 
-	conn, err := ln.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection:", err)
-		return
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			logWithTimestamp("Error accepting connection:", err)
+			continue
+		}
+		logWithTimestamp("Connection accepted")
+
+		go handleConnection(conn)
 	}
+}
+
+func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	fmt.Println("Connection accepted")
 
 	var wg sync.WaitGroup
 	cmdChan := make(chan string)
 	doneReadingChan := make(chan bool)
 	healthCheckChan := make(chan string)
 	stopChan := make(chan struct{})
+	healthCheckActive := false
 
 	// Health check routine
 	go func() {
 		var lastTimestamp int64
+		timer := time.NewTimer(3 * time.Second)
+		timer.Stop()
+
 		for {
 			select {
-			case <-time.After(12 * time.Second): // 10 seconds + 2 seconds grace period
-				fmt.Println("Health check failed. No message received in time.")
-				close(stopChan) // Signal to stop the program
-				return
+			case <-timer.C:
+				if healthCheckActive {
+					logWithTimestamp("Health check failed. No message received in time.")
+					close(stopChan)
+					return
+				}
 			case msg := <-healthCheckChan:
+				if !healthCheckActive {
+					continue
+				}
+
 				if strings.HasPrefix(msg, "healthcheck") {
 					fields := strings.Fields(msg)
 					if len(fields) < 2 {
-						fmt.Println("Invalid healthcheck message format")
+						logWithTimestamp("Invalid healthcheck message format")
 						continue
 					}
 					timestamp, err := strconv.ParseInt(fields[1], 10, 64)
 					if err != nil {
-						fmt.Println("Invalid timestamp in healthcheck message")
+						logWithTimestamp("Invalid timestamp in healthcheck message")
 						continue
 					}
 					if timestamp <= lastTimestamp {
-						fmt.Println("Received an old timestamp in healthcheck message")
+						logWithTimestamp("Received an old timestamp in healthcheck message")
 						continue
 					}
 					lastTimestamp = timestamp
-					fmt.Println("Health check passed")
-					// Reset the timer
-					time.After(12 * time.Second)
+					logWithTimestamp("Health check passed")
+					timer.Reset(3 * time.Second)
 				}
 			}
 		}
@@ -83,10 +101,10 @@ func main() {
 			if err := scanner.Err(); err != nil {
 				netErr, ok := err.(net.Error)
 				if !ok || !netErr.Timeout() {
-					fmt.Println("Error reading from connection:", err)
+					logWithTimestamp("Error reading from connection:", err)
 					break
 				}
-				scanner = bufio.NewScanner(conn) // Reset the scanner
+				scanner = bufio.NewScanner(conn)
 			}
 		}
 		close(doneReadingChan)
@@ -97,14 +115,16 @@ func main() {
 	for {
 		select {
 		case cmd := <-cmdChan:
+			logWithTimestamp("Received command:", cmd)
 			if strings.HasPrefix(strings.ToLower(cmd), "startstreams") {
+				healthCheckActive = true
 				port := strings.TrimSpace(cmd[len("startstreams"):])
 				lidarPort, err := strconv.Atoi(port)
 				if err != nil {
-					fmt.Println("Invalid port number for streams:", err)
+					logWithTimestamp("Invalid port number for streams:", err)
 					continue
 				}
-				lidarPortStr := strconv.Itoa(lidarPort + 10) // Increment port number by 1 for LiDAR
+				lidarPortStr := strconv.Itoa(lidarPort + 10)
 				batteryPortStr := strconv.Itoa(lidarPort + 20)
 
 				cameraDoneChan = make(chan struct{})
@@ -112,11 +132,11 @@ func main() {
 				batteryDoneChan = make(chan struct{})
 
 				wg.Add(3)
-				go streamhandlers.handleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
-				go streamhandlers.handleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
-				go streamhandlers.handleBatteryStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), batteryPortStr, cameraDoneChan, &wg)
+				go streamhandlers.HandleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
+				go streamhandlers.HandleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
+				go streamhandlers.HandleBatteryStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), batteryPortStr, batteryDoneChan, &wg)
 			} else if strings.HasPrefix(strings.ToLower(cmd), "stopstreams") {
-				fmt.Println("Received stopstreams command")
+				logWithTimestamp("Received stopstreams command")
 				if cameraDoneChan != nil {
 					close(cameraDoneChan)
 				}
@@ -124,41 +144,36 @@ func main() {
 					close(lidarDoneChan)
 				}
 				if batteryDoneChan != nil {
-					close(lidarDoneChan)
+					close(batteryDoneChan)
 				}
 				wg.Wait()
-				fmt.Println("All streams stopped")
+				logWithTimestamp("All streams stopped")
 				cameraDoneChan, lidarDoneChan, batteryDoneChan = nil, nil, nil
 			}
-		case <-doneReadingChan:
-			if cameraDoneChan != nil {
-				close(cameraDoneChan)
-			}
-			if lidarDoneChan != nil {
-				close(lidarDoneChan)
-			}
-			if batteryDoneChan != nil {
-				close(batteryDoneChan)
-			}
 
-			fmt.Println("Stopping program due to read done.")
+		case <-doneReadingChan:
+			logWithTimestamp("Connection closed by client.")
 			return
 		case <-stopChan:
-			// Close the stream channels if they are not nil
-			if cameraDoneChan != nil {
-				close(cameraDoneChan)
-			}
-			if lidarDoneChan != nil {
-				close(lidarDoneChan)
-			}
-			if batteryDoneChan != nil {
-				close(batteryDoneChan)
-			}
-
-			fmt.Println("Stopping program due to health check failure.")
-			return // Exit the main function and thus the program
+			logWithTimestamp("Connection closed due to health check failure.")
+			return
 		}
-	}
 
-	wg.Wait()
+		if cameraDoneChan != nil {
+			close(cameraDoneChan)
+		}
+		if lidarDoneChan != nil {
+			close(lidarDoneChan)
+		}
+		if batteryDoneChan != nil {
+			close(batteryDoneChan)
+		}
+
+		wg.Wait()
+		logWithTimestamp("Connection handling completed.")
+	}
+}
+
+func logWithTimestamp(v ...interface{}) {
+	fmt.Println(time.Now().Format("2006-01-02 15:04:05"), v)
 }
