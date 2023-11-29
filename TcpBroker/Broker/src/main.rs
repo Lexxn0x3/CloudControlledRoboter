@@ -68,15 +68,6 @@ fn multi_conection_listener(client_senders: &Arc<Mutex<Vec<Sender<Vec<u8>>>>>, p
     }
 }
 
-// Starts a new thread that listens for messages on the channel and broadcasts them.
-fn start_message_broadcaster_thread(rx: mpsc::Receiver<Vec<u8>>, websocket_client_senders: Arc<Mutex<Vec<ws::Sender>>>) {
-    thread::spawn(move || {
-        for message in rx {
-           websocket_server::broadcast_message_to_websocket_clients(&websocket_client_senders, message);
-        }
-    });
-}
-
 // Thread that listens for messages from the shared channel and broadcasts them to WebSocket clients
 fn start_websocket_broadcast_thread(rx: Receiver<Vec<u8>>, websocket_client_senders: Arc<Mutex<Vec<ws::Sender>>>) {
     thread::spawn(move || {
@@ -107,8 +98,15 @@ fn multi_connection_websocket_listener(
     }
 
     // Define the settings for the WebSocket server
-    let settings = ws::Settings {
-        max_fragment_size: websocket_frame_size,
+    let settings = ws::Settings
+    {
+        max_fragment_size: websocket_frame_size, // for example, 64KB //default unlimited
+        in_buffer_capacity: websocket_frame_size,
+        in_buffer_grow: true,
+        out_buffer_capacity: websocket_frame_size,
+        fragment_size: websocket_frame_size, // for example, 32KB
+        fragments_grow: true,
+        tcp_nodelay: true,
         ..ws::Settings::default()
     };
 
