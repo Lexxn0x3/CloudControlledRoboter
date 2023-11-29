@@ -39,7 +39,7 @@ pub fn parse_arguments() -> Config {
             .long("websocket-frame-size")
             .help("Sets the max packet size for the websocket in bytes")
             .takes_value(true)
-            .default_value("2097152") // Default to 2Mb, you can change this to what you want
+            .default_value("4194304") // Default to 4Mb, you can change this to what you want
             .validator(|v| v.parse::<usize>()
                             .map(|_| ())
                             .map_err(|_| "WebSocket frame size must be an integer. Default 2Mb")))
