@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"sync"
@@ -42,14 +44,16 @@ func handleConnection(conn net.Conn) {
 	healthCheckChan := make(chan string)
 	stopChan := make(chan struct{})
 	healthCheckActive := false
+	lastHealthCheckActive := healthCheckActive
 
 	// Health check routine
 	go func() {
 		var lastTimestamp int64
 		timer := time.NewTimer(3 * time.Second)
-		timer.Stop()
+		logWithTimestamp("Health check routine started")
 
 		for {
+
 			select {
 			case <-timer.C:
 				if healthCheckActive {
@@ -58,8 +62,10 @@ func handleConnection(conn net.Conn) {
 					return
 				}
 			case msg := <-healthCheckChan:
-				if !healthCheckActive {
-					continue
+				lastHealthCheckActive = healthCheckActive
+				healthCheckActive = true
+				if lastHealthCheckActive != healthCheckActive {
+					timer.Reset(3 * time.Second)
 				}
 
 				if strings.HasPrefix(msg, "healthcheck") {
@@ -111,13 +117,14 @@ func handleConnection(conn net.Conn) {
 	}()
 
 	var cameraDoneChan, lidarDoneChan, batteryDoneChan chan struct{}
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
 
 	for {
 		select {
 		case cmd := <-cmdChan:
 			logWithTimestamp("Received command:", cmd)
 			if strings.HasPrefix(strings.ToLower(cmd), "startstreams") {
-				healthCheckActive = true
 				port := strings.TrimSpace(cmd[len("startstreams"):])
 				lidarPort, err := strconv.Atoi(port)
 				if err != nil {
@@ -135,17 +142,11 @@ func handleConnection(conn net.Conn) {
 				go streamhandlers.HandleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
 				go streamhandlers.HandleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
 				go streamhandlers.HandleBatteryStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), batteryPortStr, batteryDoneChan, &wg)
+				healthCheckChan <- "healthcheck 0"
 			} else if strings.HasPrefix(strings.ToLower(cmd), "stopstreams") {
 				logWithTimestamp("Received stopstreams command")
-				if cameraDoneChan != nil {
-					close(cameraDoneChan)
-				}
-				if lidarDoneChan != nil {
-					close(lidarDoneChan)
-				}
-				if batteryDoneChan != nil {
-					close(batteryDoneChan)
-				}
+				closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
+
 				wg.Wait()
 				logWithTimestamp("All streams stopped")
 				cameraDoneChan, lidarDoneChan, batteryDoneChan = nil, nil, nil
@@ -153,24 +154,26 @@ func handleConnection(conn net.Conn) {
 
 		case <-doneReadingChan:
 			logWithTimestamp("Connection closed by client.")
+			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		case <-stopChan:
 			logWithTimestamp("Connection closed due to health check failure.")
+			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
+			return
+		case <-sigChan:
+			logWithTimestamp("Connection closed due to SIGINT.")
+			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		}
 
-		if cameraDoneChan != nil {
-			close(cameraDoneChan)
-		}
-		if lidarDoneChan != nil {
-			close(lidarDoneChan)
-		}
-		if batteryDoneChan != nil {
-			close(batteryDoneChan)
-		}
+	}
+}
 
-		wg.Wait()
-		logWithTimestamp("Connection handling completed.")
+func closeAllChannels(chans ...chan struct{}) {
+	for _, ch := range chans {
+		if ch != nil {
+			close(ch)
+		}
 	}
 }
 

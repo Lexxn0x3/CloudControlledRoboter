@@ -101,45 +101,54 @@ func startJSONServer() {
 func handleJSONConnection(conn net.Conn) {
 	defer conn.Close()
 
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		text := scanner.Text()
+	go func() {
+		scanner := bufio.NewScanner(conn)
+		for {
+			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			if scanner.Scan() {
+				text := scanner.Text()
+				var jsonData map[string]interface{}
+				if err := json.Unmarshal([]byte(text), &jsonData); err != nil {
+					logWithTimestamp("Invalid JSON:", err)
+					continue
+				}
 
-		var jsonData map[string]interface{}
-		if err := json.Unmarshal([]byte(text), &jsonData); err != nil {
-			logWithTimestamp("Invalid JSON:", err)
-			continue
+				if _, ok := jsonData["motor1"]; ok {
+					var motor Motor
+					if err := mapstructure.Decode(jsonData, &motor); err != nil {
+						logWithTimestamp("Error decoding motor data:", err)
+						continue
+					}
+					handleMotorData(motor)
+				} else if _, ok := jsonData["mode"]; ok {
+					var lightbar Lightbar
+					if err := mapstructure.Decode(jsonData, &lightbar); err != nil {
+						logWithTimestamp("Error decoding lightbar data:", err)
+						continue
+					}
+					handleLightbarData(lightbar)
+				} else if _, ok := jsonData["buzzer"]; ok {
+					var buzzer Buzzer
+					if err := mapstructure.Decode(jsonData, &buzzer); err != nil {
+						logWithTimestamp("Error decoding buzzer data:", err)
+						continue
+					}
+					handleBuzzerData(buzzer)
+				} else {
+					logWithTimestamp("Unrecognized JSON object")
+				}
+			}
+
+			if err := scanner.Err(); err != nil {
+				netErr, ok := err.(net.Error)
+				if !ok || !netErr.Timeout() {
+					logWithTimestamp("Error reading from connection:", err)
+					break
+				}
+				scanner = bufio.NewScanner(conn)
+			}
 		}
-
-		if _, ok := jsonData["motor1"]; ok {
-			var motor Motor
-			if err := mapstructure.Decode(jsonData, &motor); err != nil {
-				logWithTimestamp("Error decoding motor data:", err)
-				continue
-			}
-			handleMotorData(motor)
-		} else if _, ok := jsonData["mode"]; ok {
-			var lightbar Lightbar
-			if err := mapstructure.Decode(jsonData, &lightbar); err != nil {
-				logWithTimestamp("Error decoding lightbar data:", err)
-				continue
-			}
-			handleLightbarData(lightbar)
-		} else if _, ok := jsonData["buzzer"]; ok {
-			var buzzer Buzzer
-			if err := mapstructure.Decode(jsonData, &buzzer); err != nil {
-				logWithTimestamp("Error decoding buzzer data:", err)
-				continue
-			}
-			handleBuzzerData(buzzer)
-		} else {
-			logWithTimestamp("Unrecognized JSON object")
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		logWithTimestamp("Error reading from JSON connection:", err)
-	}
+	}()
 }
 
 func handleMotorData(motor Motor) {

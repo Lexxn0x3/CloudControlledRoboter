@@ -33,7 +33,9 @@ func HandleCameraStream(addr string, port string, doneChan chan struct{}, wg *sy
 		} else {
 			fmt.Printf("ffmpeg exited normally on port %s\n", port)
 		}
-		close(doneChan)
+		if _, ok := <-doneChan; ok {
+			close(doneChan)
+		}
 	}()
 
 	<-doneChan

@@ -39,8 +39,8 @@ func (rm *Rosmaster) readSerial() {
 		buf := make([]byte, 1)
 		_, err := rm.port.Read(buf)
 		if err != nil {
-			log.Println("Error reading from serial port:", err)
-			continue
+			log.Println("Warn reading from serial port: Maybe main program exited", err)
+			return
 		}
 
 		if buf[0] == head {
