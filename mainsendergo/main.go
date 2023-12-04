@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -12,7 +13,34 @@ import (
 	"time"
 
 	"github.com/mattzi/mainsendergo/streamhandlers"
+	"github.com/mitchellh/mapstructure"
 )
+
+type Motor struct {
+	Motor1 int8 `json:"motor1" mapstructure:"motor1"`
+	Motor2 int8 `json:"motor2" mapstructure:"motor2"`
+	Motor3 int8 `json:"motor3" mapstructure:"motor3"`
+	Motor4 int8 `json:"motor4" mapstructure:"motor4"`
+}
+
+var motorChan = make(chan string)
+
+type Lightbar struct {
+	Mode   bool   `json:"mode" mapstructure:"mode"`
+	LedID  string `json:"ledid" mapstructure:"ledid"`
+	RGB    string `json:"rgb" mapstructure:"rgb"`
+	Effect string `json:"effect" mapstructure:"effect"`
+	Speed  string `json:"speed" mapstructure:"speed"`
+	Parm   string `json:"parm" mapstructure:"parm"`
+}
+
+var lightbarChan = make(chan string)
+
+type Buzzer struct {
+	Duration int `json:"buzzer" mapstructure:"buzzer"`
+}
+
+var buzzerChan = make(chan string)
 
 func main() {
 	ln, err := net.Listen("tcp", "0.0.0.0:6969")
@@ -23,6 +51,8 @@ func main() {
 	defer ln.Close()
 	logWithTimestamp("TCP server listening at 0.0.0.0:6969")
 
+	go handleIncomingJson()
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -32,6 +62,53 @@ func main() {
 		logWithTimestamp("Connection accepted")
 
 		go handleConnection(conn)
+	}
+}
+
+func handleIncomingJson() {
+	for {
+		select {
+		case msg := <-motorChan:
+			var jsonData map[string]interface{}
+			if err := json.Unmarshal([]byte(msg), &jsonData); err != nil {
+				logWithTimestamp("Invalid JSON:", err)
+				continue
+			}
+
+			var motor Motor
+			err := mapstructure.Decode(jsonData, &motor)
+			if err != nil {
+				logWithTimestamp("Error decoding JSON:", err)
+				continue
+			}
+			logWithTimestamp("Received motor:", motor)
+		case msg := <-lightbarChan:
+			var jsonData map[string]interface{}
+			if err := json.Unmarshal([]byte(msg), &jsonData); err != nil {
+				logWithTimestamp("Invalid JSON:", err)
+				continue
+			}
+			var lightbar Lightbar
+			err := mapstructure.Decode(jsonData, &lightbar)
+			if err != nil {
+				logWithTimestamp("Error decoding JSON:", err)
+				continue
+			}
+			logWithTimestamp("Received lightbar:", lightbar)
+		case msg := <-buzzerChan:
+			var jsonData map[string]interface{}
+			if err := json.Unmarshal([]byte(msg), &jsonData); err != nil {
+				logWithTimestamp("Invalid JSON:", err)
+				continue
+			}
+			var buzzer Buzzer
+			err := mapstructure.Decode(jsonData, &buzzer)
+			if err != nil {
+				logWithTimestamp("Error decoding JSON:", err)
+				continue
+			}
+			logWithTimestamp("Received buzzer:", buzzer)
+		}
 	}
 }
 
@@ -99,6 +176,12 @@ func handleConnection(conn net.Conn) {
 				text := scanner.Text()
 				if strings.HasPrefix(text, "healthcheck") {
 					healthCheckChan <- text
+				} else if strings.HasPrefix(text, "buzzer") {
+					buzzerChan <- text
+				} else if strings.HasPrefix(text, "lightbar") {
+					lightbarChan <- text
+				} else if strings.HasPrefix(text, "motor") {
+					motorChan <- text
 				} else {
 					cmdChan <- text
 				}

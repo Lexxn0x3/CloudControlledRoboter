@@ -34,6 +34,8 @@ type Buzzer struct {
 	Duration int `json:"buzzer" mapstructure:"buzzer"`
 }
 
+var targetConnection *net.Conn
+
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter target IP address: ")
@@ -45,37 +47,39 @@ func main() {
 	portStr = strings.TrimSpace(portStr)
 
 	addr := ip + ":6969"
-	conn, err := net.Dial("tcp", addr)
+	currentConnection, err := net.Dial("tcp", addr)
 	if err != nil {
 		logWithTimestamp("Error connecting to server:", err)
 		return
 	}
-	defer conn.Close()
+	defer currentConnection.Close()
 	logWithTimestamp("Connected to", addr)
 
-	_, err = conn.Write([]byte("startstreams " + portStr + "\n"))
+	_, err = currentConnection.Write([]byte("startstreams " + portStr + "\n"))
 	if err != nil {
 		logWithTimestamp("Error sending startstreams command:", err)
 		return
 	}
 
-	go func() {
-		for {
-			msg := "healthcheck " + strconv.FormatInt(time.Now().Unix(), 10) + "\n"
-			_, err := conn.Write([]byte(msg))
-			if err != nil {
-				logWithTimestamp("Error sending healthcheck message:", err)
-				return
-			}
-			logWithTimestamp("Sent healthcheck message:", strings.Split(msg, "\n")[0])
-			time.Sleep(2 * time.Second)
-		}
-	}()
-
+	targetConnection = &currentConnection
 	// Start a new TCP server to handle JSON objects
 	go startJSONServer()
+	go runHealthcheck()
 
 	select {}
+}
+
+func runHealthcheck() {
+	for {
+		msg := "healthcheck " + strconv.FormatInt(time.Now().Unix(), 10) + "\n"
+		_, err := (*targetConnection).Write([]byte(msg))
+		if err != nil {
+			logWithTimestamp("Error sending healthcheck message:", err)
+			return
+		}
+		logWithTimestamp("Sent healthcheck message:", strings.Split(msg, "\n")[0])
+		time.Sleep(2 * time.Second)
+	}
 }
 
 func startJSONServer() {
@@ -101,72 +105,91 @@ func startJSONServer() {
 func handleJSONConnection(conn net.Conn) {
 	defer conn.Close()
 
-	go func() {
-		scanner := bufio.NewScanner(conn)
-		for {
-			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-			if scanner.Scan() {
-				text := scanner.Text()
-				var jsonData map[string]interface{}
-				if err := json.Unmarshal([]byte(text), &jsonData); err != nil {
-					logWithTimestamp("Invalid JSON:", err)
+	scanner := bufio.NewScanner(conn)
+	for {
+		conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+		if scanner.Scan() {
+			text := scanner.Text()
+			var jsonData map[string]interface{}
+			if err := json.Unmarshal([]byte(text), &jsonData); err != nil {
+				logWithTimestamp("Invalid JSON:", err)
+				continue
+			}
+
+			if _, ok := jsonData["motor1"]; ok {
+				var motor Motor
+				if err := mapstructure.Decode(jsonData, &motor); err != nil {
+					logWithTimestamp("Error decoding motor data:", err)
 					continue
 				}
-
-				if _, ok := jsonData["motor1"]; ok {
-					var motor Motor
-					if err := mapstructure.Decode(jsonData, &motor); err != nil {
-						logWithTimestamp("Error decoding motor data:", err)
-						continue
-					}
-					handleMotorData(motor)
-				} else if _, ok := jsonData["mode"]; ok {
-					var lightbar Lightbar
-					if err := mapstructure.Decode(jsonData, &lightbar); err != nil {
-						logWithTimestamp("Error decoding lightbar data:", err)
-						continue
-					}
-					handleLightbarData(lightbar)
-				} else if _, ok := jsonData["buzzer"]; ok {
-					var buzzer Buzzer
-					if err := mapstructure.Decode(jsonData, &buzzer); err != nil {
-						logWithTimestamp("Error decoding buzzer data:", err)
-						continue
-					}
-					handleBuzzerData(buzzer)
-				} else {
-					logWithTimestamp("Unrecognized JSON object")
+				handleMotorData(motor)
+			} else if _, ok := jsonData["mode"]; ok {
+				var lightbar Lightbar
+				if err := mapstructure.Decode(jsonData, &lightbar); err != nil {
+					logWithTimestamp("Error decoding lightbar data:", err)
+					continue
 				}
-			}
-
-			if err := scanner.Err(); err != nil {
-				netErr, ok := err.(net.Error)
-				if !ok || !netErr.Timeout() {
-					logWithTimestamp("Error reading from connection:", err)
-					break
+				handleLightbarData(lightbar)
+			} else if _, ok := jsonData["buzzer"]; ok {
+				var buzzer Buzzer
+				if err := mapstructure.Decode(jsonData, &buzzer); err != nil {
+					logWithTimestamp("Error decoding buzzer data:", err)
+					continue
 				}
-				scanner = bufio.NewScanner(conn)
+				handleBuzzerData(buzzer)
+			} else {
+				logWithTimestamp("Unrecognized JSON object")
 			}
 		}
-	}()
+
+		if err := scanner.Err(); err != nil {
+			netErr, ok := err.(net.Error)
+			if !ok || !netErr.Timeout() {
+				logWithTimestamp("Error reading from connection:", err)
+				break
+			}
+			scanner = bufio.NewScanner(conn)
+		}
+	}
 }
 
 func handleMotorData(motor Motor) {
 	logWithTimestamp("Received motor data:", motor)
 	// Process motor data
-	// Relay to main server or perform some action
+	byteSlice, err := json.Marshal(motor)
+	if err != nil {
+		logWithTimestamp("Error marshalling motor data:", err)
+		return
+	}
+	msg := "motor " + string(byteSlice) + "\n"
+
+	(*targetConnection).Write([]byte(msg))
 }
 
 func handleLightbarData(lightbar Lightbar) {
 	logWithTimestamp("Received lightbar data:", lightbar)
 	// Process lightbar data
-	// Relay to main server or perform some action
+	byteSlice, err := json.Marshal(lightbar)
+	if err != nil {
+		logWithTimestamp("Error marshalling lightbar data:", err)
+		return
+	}
+	msg := "lightbar " + string(byteSlice) + "\n"
+
+	(*targetConnection).Write([]byte(msg))
 }
 
 func handleBuzzerData(buzzer Buzzer) {
 	logWithTimestamp("Received buzzer data:", buzzer)
 	// Process buzzer data
-	// Relay to main server or perform some action
+	byteSlice, err := json.Marshal(buzzer)
+	if err != nil {
+		logWithTimestamp("Error marshalling buzzer data:", err)
+		return
+	}
+	msg := "buzzer " + string(byteSlice) + "\n"
+
+	(*targetConnection).Write([]byte(msg))
 }
 
 func logWithTimestamp(v ...interface{}) {
