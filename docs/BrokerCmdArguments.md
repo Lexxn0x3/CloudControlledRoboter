@@ -44,6 +44,8 @@ The program accepts the following arguments:
 - `--multi-connection-port <PORT>`: Sets the client port (default: 4001).
 - `--debug-level <LEVEL>`: Sets the debug level. Possible values are debug, info, error (default: info).
 - `--buffer-size <SIZE>`: Sets the buffer size in bytes (default: 512000).
+- `--websocket-port <SIZE>`: Sets the buffer size in bytes (default: 2097152) 2Mb.
+- `--websocket-port <PORT>`: Sets the websocket port (default: 5001).
 
 For example, to start the program with a custom server port and buffer size, you would run:
 ```bash

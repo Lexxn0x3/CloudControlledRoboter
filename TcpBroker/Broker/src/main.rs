@@ -1,23 +1,23 @@
 mod config;
+mod websocket_server;
 
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write, Error};
-use std::sync::mpsc::{Sender};
+use std::sync::mpsc::{Receiver, Sender};
 use env_logger;
 use log::{info, error, debug};
-use env_logger::{Builder, Env};
+use env_logger::{Env};
+use ws::{Builder};
+use crate::config::Config;
 
-fn main()
-{
-    //Get config from Args
+fn main() {
     let config = config::parse_arguments();
 
     // Initialize the logger with the specified level
-    Builder::from_env(Env::default().default_filter_or(config.debug_level)).init();
-
+    env_logger::Builder::from_env(Env::default().default_filter_or(config.debug_level)).init();
 
     let client_senders = Arc::new(Mutex::new(vec![]));
 
@@ -27,7 +27,26 @@ fn main()
         single_connection_listener(client_senders_clone, config.single_connection_port, config.buffer_size);
     });
 
-    multi_conection_listener(&client_senders, config.multi_connection_port);
+    // Start multi_conection_listener in a separate thread
+    let client_senders_clone = Arc::clone(&client_senders);
+    thread::spawn(move || {
+        multi_conection_listener(&client_senders_clone, config.multi_connection_port);
+    });
+
+    let websocket_client_senders = Arc::new(Mutex::new(vec![]));
+
+    // Start the WebSocket listener in a new thread.
+    // This thread will broadcast messages from the shared channel to WebSocket clients.
+    let websocket_client_senders_clone = Arc::clone(&websocket_client_senders);
+    let client_senders_clone = Arc::clone(&client_senders);
+    thread::spawn(move || {
+        multi_connection_websocket_listener(client_senders_clone, websocket_client_senders_clone, config.websocket_port, config.websocket_frame_size);
+    });
+
+    // Main loop to keep the main thread alive
+    loop {
+        thread::sleep(std::time::Duration::from_secs(1));
+    }
 }
 
 fn multi_conection_listener(client_senders: &Arc<Mutex<Vec<Sender<Vec<u8>>>>>, port: u16) {
@@ -49,7 +68,70 @@ fn multi_conection_listener(client_senders: &Arc<Mutex<Vec<Sender<Vec<u8>>>>>, p
     }
 }
 
-fn single_connection_listener(client_senders: Arc<Mutex<Vec<Sender<Vec<u8>>>>>, port: u16, buffer_size: usize) {
+// Thread that listens for messages from the shared channel and broadcasts them to WebSocket clients
+fn start_websocket_broadcast_thread(rx: Receiver<Vec<u8>>, websocket_client_senders: Arc<Mutex<Vec<ws::Sender>>>) {
+    thread::spawn(move || {
+        for message in rx {
+            let message = message.clone();
+            let clients = websocket_client_senders.lock().unwrap();
+            for client in clients.iter() {
+                let _ = client.send(ws::Message::binary(message.clone()));
+            }
+        }
+    });
+}
+
+// Your existing WebSocket server start function, now starts the broadcaster thread.
+fn multi_connection_websocket_listener(
+    client_senders: Arc<Mutex<Vec<mpsc::Sender<Vec<u8>>>>>,
+    websocket_client_senders: Arc<Mutex<Vec<ws::Sender>>>,
+    port: u16, websocket_frame_size: usize
+) {
+    // Start a thread dedicated to broadcasting messages to WebSocket clients
+    let (tx, rx) = mpsc::channel::<Vec<u8>>();
+    start_websocket_broadcast_thread(rx, websocket_client_senders.clone());
+
+    // Add the new broadcaster's sender to the shared channel vector
+    {
+        let mut senders = client_senders.lock().unwrap();
+        senders.push(tx);
+    }
+
+    // Define the settings for the WebSocket server
+    let settings = ws::Settings
+    {
+        max_fragment_size: websocket_frame_size, // for example, 64KB //default unlimited
+        in_buffer_capacity: websocket_frame_size,
+        in_buffer_grow: true,
+        out_buffer_capacity: websocket_frame_size,
+        fragment_size: websocket_frame_size, // for example, 32KB
+        fragments_grow: true,
+        tcp_nodelay: true,
+        ..ws::Settings::default()
+    };
+
+    // Create a builder with the specified settings
+    //let ws_builder = Builder::new().with_settings(settings);
+
+    // Closure that will be called to create a new WebSocketServer instance for each new connection
+    let ws_factory = move |out: ws::Sender| {
+        websocket_client_senders.lock().unwrap().push(out.clone());
+        websocket_server::WebSocketServer {
+            out,
+            websocket_client_senders: websocket_client_senders.clone(),
+        }
+    };
+
+    // Build the server and start listening
+    if let Err(e) = Builder::new().with_settings(settings).build(ws_factory).and_then(|server| server.listen(format!("0.0.0.0:{}", port))) {
+        error!("Failed to start WebSocket server: {:?}", e);
+    }
+}
+
+// This function sets up the WebSocket listener.
+
+fn single_connection_listener(client_senders: Arc<Mutex<Vec<Sender<Vec<u8>>>>>, port: u16, buffer_size: usize)
+{
     let single_listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
     info!("Single-connection TCP listener started on {}:{}", single_listener.local_addr().unwrap().ip(), single_listener.local_addr().unwrap().port());
 
@@ -101,17 +183,22 @@ fn handle_single_connection(mut stream: TcpStream, clients: Arc<Mutex<Vec<mpsc::
     Ok(())
 }
 
-fn handle_client_connection(mut stream: TcpStream, rx: mpsc::Receiver<Vec<u8>>) -> Result<(), Error> {
+fn handle_client_connection(mut stream: TcpStream, rx: mpsc::Receiver<Vec<u8>>) -> Result<(), Error>
+{
     debug!("Multi-connection client handler started.");
-    loop {
-        match rx.recv() {
+    loop
+    {
+        match rx.recv()
+        {
             Ok(data) => {
-                if stream.write_all(&data).is_err() {
+                if stream.write_all(&data).is_err()
+                {
                     error!("Error writing to multi-connection client. Client may have disconnected.");
                     break;
                 }
             },
-            Err(_) => {
+            Err(_) =>
+                {
                 debug!("Multi-connection client disconnected. Ending handler thread.");
                 break;
             }
