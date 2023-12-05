@@ -138,7 +138,7 @@ func handleIncomingJson() {
 				logWithTimestamp("Error decoding JSON:", err)
 				continue
 			}
-			logWithTimestamp("Received buzzer:", buzzer)
+			logWithTimestamp("Received buzzer:", buzzer.Duration)
 
 			rosmaster.SetBeep(buzzer.Duration)
 		}
