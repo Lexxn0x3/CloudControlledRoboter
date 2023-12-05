@@ -22,12 +22,14 @@ type Motor struct {
 }
 
 type Lightbar struct {
-	Mode   bool   `json:"mode" mapstructure:"mode"`
-	LedID  string `json:"ledid" mapstructure:"ledid"`
-	RGB    string `json:"rgb" mapstructure:"rgb"`
-	Effect string `json:"effect" mapstructure:"effect"`
-	Speed  string `json:"speed" mapstructure:"speed"`
-	Parm   string `json:"parm" mapstructure:"parm"`
+	Mode   bool `json:"mode" mapstructure:"mode"`
+	LedID  byte `json:"ledid" mapstructure:"ledid"`
+	R      byte `json:"red" mapstructure:"red"`
+	G      byte `json:"green" mapstructure:"green"`
+	B      byte `json:"blue" mapstructure:"blue"`
+	Effect byte `json:"effect" mapstructure:"effect"`
+	Speed  byte `json:"speed" mapstructure:"speed"`
+	Parm   byte `json:"parm" mapstructure:"parm"`
 }
 
 type Buzzer struct {
@@ -83,7 +85,7 @@ func runHealthcheck() {
 }
 
 func startJSONServer() {
-	ln, err := net.Listen("tcp", "0.0.0.0:4200")
+	ln, err := net.Listen("tcp4", "0.0.0.0:4200")
 	if err != nil {
 		logWithTimestamp("Error setting up JSON TCP server:", err)
 		return
@@ -112,6 +114,7 @@ func handleJSONConnection(conn net.Conn) {
 			text := scanner.Text()
 			var jsonData map[string]interface{}
 			if err := json.Unmarshal([]byte(text), &jsonData); err != nil {
+				logWithTimestamp("Error unmarshalling JSON: ", text)
 				logWithTimestamp("Invalid JSON:", err)
 				continue
 			}

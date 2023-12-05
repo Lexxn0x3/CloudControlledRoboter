@@ -28,12 +28,14 @@ type Motor struct {
 var motorChan = make(chan string)
 
 type Lightbar struct {
-	Mode   bool   `json:"mode" mapstructure:"mode"`
-	LedID  string `json:"ledid" mapstructure:"ledid"`
-	RGB    string `json:"rgb" mapstructure:"rgb"`
-	Effect string `json:"effect" mapstructure:"effect"`
-	Speed  string `json:"speed" mapstructure:"speed"`
-	Parm   string `json:"parm" mapstructure:"parm"`
+	Mode   bool `json:"mode" mapstructure:"mode"`
+	LedID  byte `json:"ledid" mapstructure:"ledid"`
+	R      byte `json:"red" mapstructure:"red"`
+	G      byte `json:"green" mapstructure:"green"`
+	B      byte `json:"blue" mapstructure:"blue"`
+	Effect byte `json:"effect" mapstructure:"effect"`
+	Speed  byte `json:"speed" mapstructure:"speed"`
+	Parm   byte `json:"parm" mapstructure:"parm"`
 }
 
 var lightbarChan = make(chan string)
@@ -118,6 +120,11 @@ func handleIncomingJson() {
 				continue
 			}
 			logWithTimestamp("Received lightbar:", lightbar)
+			if lightbar.Mode {
+				rosmaster.SetColorfulEffect(lightbar.Effect, lightbar.Speed, lightbar.Parm)
+			} else {
+				rosmaster.SetColorfulLamps(lightbar.LedID, lightbar.R, lightbar.B, lightbar.B)
+			}
 		case msg := <-buzzerChan:
 			var jsonData map[string]interface{}
 			unmarshalMsg := strings.Replace(msg, "buzzer ", "", 1)
@@ -132,6 +139,8 @@ func handleIncomingJson() {
 				continue
 			}
 			logWithTimestamp("Received buzzer:", buzzer)
+
+			rosmaster.SetBeep(buzzer.Duration)
 		}
 	}
 }
