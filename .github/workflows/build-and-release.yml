@@ -7,7 +7,7 @@ on:
     paths:
       - 'TcpBroker/**'
       - 'mainsendergo/**'
-      - 'websocket-broker/**'
+      - 'mainsenderservergo/**'
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
       mainsendergo: ${{ steps.filter.outputs.mainsendergo }}
-      websocket-broker: ${{ steps.filter.outputs.websocket-broker }}
+      mainsenderservergo: ${{ steps.filter.outputs.mainsenderservergo }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,8 +31,8 @@ jobs:
               - 'TcpBroker/**'
             mainsendergo:
               - 'mainsendergo/**'
-            websocket-broker:
-              - 'websocket-broker/**'
+            mainsenderservergo:
+              - 'mainsenderservergo/**'
 
   build-rust:
     needs: changes
@@ -115,9 +115,9 @@ jobs:
           fi
 
 
-  build-websocket-broker:
+  build-mainsenderservergo:
     needs: changes
-    if: ${{ needs.changes.outputs.websocket-broker == 'true' }}
+    if: ${{ needs.changes.outputs.mainsenderservergo == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -132,9 +132,9 @@ jobs:
 
       - name: Build Go Binary 2
         run: |
-          cd repository/websocket-broker
+          cd repository/mainsenderservergo
           mkdir -p ../../build
-          GOOS=linux go build -o ../../build/websocket-broker
+          GOOS=linux go build -o ../../build/mainsenderservergo
           
       - name: Commit and Push Binary
         run: |
@@ -144,18 +144,18 @@ jobs:
           git config --global user.name "Binary Builder"
           git fetch origin binaries-branch
           git switch binaries-branch || git switch -c binaries-branch origin/binaries-branch
-          rm ./build/websocket-broker
-          mv ../build/websocket-broker ./build/websocket-broker
-          git add ./build/websocket-broker
+          rm ./build/mainsenderservergo
+          mv ../build/mainsenderservergo ./build/mainsenderservergo
+          git add ./build/mainsenderservergo
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update websocket binary"
+            git commit -m "Update mainsenderservergo binary"
             git push -u origin binaries-branch
           fi
 
   prepare-binaries-for-release:
-    needs: [build-rust, build-mainsendergo, build-websocket-broker]
+    needs: [build-rust, build-mainsendergo, build-mainsenderservergo]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
@@ -178,11 +178,11 @@ jobs:
           path: ./build/mainsendergo
           if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
 
-      - name: Upload websocket-broker to Artifacts
+      - name: Upload mainsenderservergo to Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: websocket-broker
-          path: ./build/websocket-broker
+          name: mainsenderservergo
+          path: ./build/mainsenderservergo
           if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
 
   create-release:
@@ -217,4 +217,4 @@ jobs:
           files: |
             ./artifacts/rust-binary/broker
             ./artifacts/mainsendergo/mainsendergo
-            ./artifacts/websocket-broker/websocket-broker
+            ./artifacts/mainsenderservergo/mainsenderservergo
