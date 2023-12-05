@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mattzi/mainsendergo/rosmasterlib"
 	"github.com/mattzi/mainsendergo/streamhandlers"
 	"github.com/mitchellh/mapstructure"
 )
@@ -41,6 +42,8 @@ type Buzzer struct {
 }
 
 var buzzerChan = make(chan string)
+
+var rosmaster *rosmasterlib.Rosmaster
 
 func main() {
 	ln, err := net.Listen("tcp", "0.0.0.0:6969")
@@ -83,6 +86,8 @@ func handleIncomingJson() {
 				continue
 			}
 			logWithTimestamp("Received motor:", motor)
+
+			rosmaster.SetMotor(motor.Motor1, motor.Motor2, motor.Motor3, motor.Motor4)
 		case msg := <-lightbarChan:
 			var jsonData map[string]interface{}
 			unmarshalMsg := strings.Replace(msg, "lightbar ", "", 1)
@@ -165,6 +170,7 @@ func handleConnection(conn net.Conn) {
 					}
 					lastTimestamp = timestamp
 					logWithTimestamp("Health check passed")
+					rosmaster.BlockedHealthcheck = false
 					timer.Reset(3 * time.Second)
 				}
 			}
@@ -225,9 +231,13 @@ func handleConnection(conn net.Conn) {
 				batteryDoneChan = make(chan struct{})
 
 				wg.Add(3)
+
+				rosmaster = rosmasterlib.NewRosmaster("/dev/myserial", 115200)
+				defer rosmaster.Close()
+
 				go streamhandlers.HandleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
 				go streamhandlers.HandleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
-				go streamhandlers.HandleBatteryStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), batteryPortStr, batteryDoneChan, &wg)
+				go streamhandlers.HandleBatteryStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), batteryPortStr, batteryDoneChan, &wg, rosmaster)
 				healthCheckChan <- "healthcheck 0"
 			} else if strings.HasPrefix(strings.ToLower(cmd), "stopstreams") {
 				logWithTimestamp("Received stopstreams command")
@@ -244,6 +254,8 @@ func handleConnection(conn net.Conn) {
 			return
 		case <-stopChan:
 			logWithTimestamp("Connection closed due to health check failure.")
+			rosmaster.BlockedHealthcheck = true
+			rosmaster.SetMotor(0, 0, 0, 0)
 			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		case <-sigChan:

@@ -97,7 +97,7 @@ func HandleLidarStream(addr string, port string, doneChan chan struct{}, wg *syn
 	}
 }
 
-func HandleBatteryStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
+func HandleBatteryStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup, rm *rosmasterlib.Rosmaster) {
 	defer wg.Done()
 
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", addr, port))
@@ -106,10 +106,6 @@ func HandleBatteryStream(addr string, port string, doneChan chan struct{}, wg *s
 		return
 	}
 	defer conn.Close()
-
-	rm := rosmasterlib.NewRosmaster("/dev/myserial", 115200)
-	defer rm.Close()
-
 	for {
 		select {
 		case <-time.After(1 * time.Second): // Timer for sending battery voltage
