@@ -247,6 +247,47 @@ func (rm *Rosmaster) SetCarMotion(vX, vY, vZ float64) {
 	tryCmd()
 }
 
+func (rm *Rosmaster) SetBeep(onTime int) {
+	tryCmd := func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Println("---set_beep error!---")
+			}
+		}()
+
+		if onTime < 0 {
+			log.Println("beep input error!")
+			return
+		}
+
+		value := byte(onTime & 0xFF)            // Low byte
+		valueHigh := byte((onTime >> 8) & 0xFF) // High byte
+
+		cmd := []byte{
+			rm.head,
+			rm.deviceID,
+			0x05,
+			rm.FUNC_BEEP,
+			value,
+			valueHigh,
+		}
+
+		cmd[2] = byte(len(cmd) - 1)
+		checksum := byte(rm.sum(cmd, rm.complement) & 0xff)
+		cmd = append(cmd, checksum)
+
+		rm.writeSerial(cmd)
+
+		if rm.__debug {
+			log.Println("beep:", cmd)
+		}
+
+		time.Sleep(time.Duration(rm.__delay_time) * time.Second)
+	}
+
+	tryCmd()
+}
+
 func (rm *Rosmaster) GetBatteryVoltage() float64 {
 	return rm.batteryVoltage
 }

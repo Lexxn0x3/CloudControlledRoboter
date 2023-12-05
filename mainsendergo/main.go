@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/mattzi/mainsendergo/rosmasterlib"
@@ -46,6 +47,9 @@ var buzzerChan = make(chan string)
 var rosmaster *rosmasterlib.Rosmaster
 
 func main() {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
 	ln, err := net.Listen("tcp", "0.0.0.0:6969")
 	if err != nil {
 		logWithTimestamp("Error setting up TCP server:", err)
@@ -56,11 +60,23 @@ func main() {
 
 	go handleIncomingJson()
 
+	go func() {
+		<-sigChan
+		logWithTimestamp("SIGINT received, shutting down.")
+		ln.Close()
+		_, ok := <-stopChan
+		if ok {
+			close(stopChan)
+			time.Sleep(500 * time.Millisecond)
+		}
+		return
+	}()
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			logWithTimestamp("Error accepting connection:", err)
-			continue
+			return
 		}
 		logWithTimestamp("Connection accepted")
 
@@ -120,62 +136,68 @@ func handleIncomingJson() {
 	}
 }
 
+var stopChan chan struct{}
+var healthCheckChan = make(chan string)
+
+// Health check routine
+func handleHealthcheck(wg *sync.WaitGroup) {
+	defer wg.Done()
+	healthCheckActive := false
+	lastHealthCheckActive := healthCheckActive
+
+	var lastTimestamp int64
+	timer := time.NewTimer(3 * time.Second)
+	logWithTimestamp("Health check routine started")
+
+	for {
+		select {
+		case <-timer.C:
+			if healthCheckActive {
+				logWithTimestamp("Health check failed. No message received in time.")
+				close(stopChan)
+				return
+			}
+		case msg := <-healthCheckChan:
+			lastHealthCheckActive = healthCheckActive
+			healthCheckActive = true
+			if lastHealthCheckActive != healthCheckActive {
+				timer.Reset(3 * time.Second)
+			}
+
+			if strings.HasPrefix(msg, "healthcheck") {
+				fields := strings.Fields(msg)
+				if len(fields) < 2 {
+					logWithTimestamp("Invalid healthcheck message format")
+					continue
+				}
+				timestamp, err := strconv.ParseInt(fields[1], 10, 64)
+				if err != nil {
+					logWithTimestamp("Invalid timestamp in healthcheck message")
+					continue
+				}
+				if timestamp <= lastTimestamp {
+					logWithTimestamp("Received an old timestamp in healthcheck message")
+					continue
+				}
+				lastTimestamp = timestamp
+				logWithTimestamp("Health check passed")
+				rosmaster.BlockedHealthcheck = false
+				timer.Reset(3 * time.Second)
+			}
+		case <-stopChan:
+			logWithTimestamp("Health check routine stopped")
+			return
+		}
+	}
+}
+
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	var wg sync.WaitGroup
 	cmdChan := make(chan string)
 	doneReadingChan := make(chan bool)
-	healthCheckChan := make(chan string)
-	stopChan := make(chan struct{})
-	healthCheckActive := false
-	lastHealthCheckActive := healthCheckActive
-
-	// Health check routine
-	go func() {
-		var lastTimestamp int64
-		timer := time.NewTimer(3 * time.Second)
-		logWithTimestamp("Health check routine started")
-
-		for {
-
-			select {
-			case <-timer.C:
-				if healthCheckActive {
-					logWithTimestamp("Health check failed. No message received in time.")
-					close(stopChan)
-					return
-				}
-			case msg := <-healthCheckChan:
-				lastHealthCheckActive = healthCheckActive
-				healthCheckActive = true
-				if lastHealthCheckActive != healthCheckActive {
-					timer.Reset(3 * time.Second)
-				}
-
-				if strings.HasPrefix(msg, "healthcheck") {
-					fields := strings.Fields(msg)
-					if len(fields) < 2 {
-						logWithTimestamp("Invalid healthcheck message format")
-						continue
-					}
-					timestamp, err := strconv.ParseInt(fields[1], 10, 64)
-					if err != nil {
-						logWithTimestamp("Invalid timestamp in healthcheck message")
-						continue
-					}
-					if timestamp <= lastTimestamp {
-						logWithTimestamp("Received an old timestamp in healthcheck message")
-						continue
-					}
-					lastTimestamp = timestamp
-					logWithTimestamp("Health check passed")
-					rosmaster.BlockedHealthcheck = false
-					timer.Reset(3 * time.Second)
-				}
-			}
-		}
-	}()
+	stopChan = make(chan struct{})
 
 	go func() {
 		scanner := bufio.NewScanner(conn)
@@ -209,8 +231,6 @@ func handleConnection(conn net.Conn) {
 	}()
 
 	var cameraDoneChan, lidarDoneChan, batteryDoneChan chan struct{}
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
 
 	for {
 		select {
@@ -230,14 +250,16 @@ func handleConnection(conn net.Conn) {
 				lidarDoneChan = make(chan struct{})
 				batteryDoneChan = make(chan struct{})
 
-				wg.Add(3)
+				wg.Add(4)
 
 				rosmaster = rosmasterlib.NewRosmaster("/dev/myserial", 115200)
 				defer rosmaster.Close()
+				rosmaster.SetBeep(100)
 
 				go streamhandlers.HandleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
 				go streamhandlers.HandleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
 				go streamhandlers.HandleBatteryStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), batteryPortStr, batteryDoneChan, &wg, rosmaster)
+				go handleHealthcheck(&wg)
 				healthCheckChan <- "healthcheck 0"
 			} else if strings.HasPrefix(strings.ToLower(cmd), "stopstreams") {
 				logWithTimestamp("Received stopstreams command")
@@ -249,22 +271,29 @@ func handleConnection(conn net.Conn) {
 			}
 
 		case <-doneReadingChan:
+			rosmaster.SetMotor(0, 0, 0, 0)
+			rosmaster.BlockedHealthcheck = true
+			threeBeep()
 			logWithTimestamp("Connection closed by client.")
 			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		case <-stopChan:
-			logWithTimestamp("Connection closed due to health check failure.")
-			rosmaster.BlockedHealthcheck = true
 			rosmaster.SetMotor(0, 0, 0, 0)
-			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
-			return
-		case <-sigChan:
-			logWithTimestamp("Connection closed due to SIGINT.")
+			rosmaster.BlockedHealthcheck = true
+			threeBeep()
+			logWithTimestamp("Connection closed due to stop chan receive.")
 			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		}
 
 	}
+}
+func threeBeep() {
+	rosmaster.SetBeep(100)
+	time.Sleep(150 * time.Millisecond)
+	rosmaster.SetBeep(100)
+	time.Sleep(150 * time.Millisecond)
+	rosmaster.SetBeep(100)
 }
 
 func closeAllChannels(chans ...chan struct{}) {
