@@ -107,7 +107,7 @@ func handleJSONConnection(conn net.Conn) {
 
 	scanner := bufio.NewScanner(conn)
 	for {
-		conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+		conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 		if scanner.Scan() {
 			text := scanner.Text()
 			var jsonData map[string]interface{}

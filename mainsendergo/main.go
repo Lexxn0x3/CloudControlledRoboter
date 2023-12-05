@@ -70,7 +70,8 @@ func handleIncomingJson() {
 		select {
 		case msg := <-motorChan:
 			var jsonData map[string]interface{}
-			if err := json.Unmarshal([]byte(msg), &jsonData); err != nil {
+			unmarshalMsg := strings.Replace(msg, "motor ", "", 1)
+			if err := json.Unmarshal([]byte(unmarshalMsg), &jsonData); err != nil {
 				logWithTimestamp("Invalid JSON:", err)
 				continue
 			}
@@ -84,7 +85,8 @@ func handleIncomingJson() {
 			logWithTimestamp("Received motor:", motor)
 		case msg := <-lightbarChan:
 			var jsonData map[string]interface{}
-			if err := json.Unmarshal([]byte(msg), &jsonData); err != nil {
+			unmarshalMsg := strings.Replace(msg, "lightbar ", "", 1)
+			if err := json.Unmarshal([]byte(unmarshalMsg), &jsonData); err != nil {
 				logWithTimestamp("Invalid JSON:", err)
 				continue
 			}
@@ -97,7 +99,8 @@ func handleIncomingJson() {
 			logWithTimestamp("Received lightbar:", lightbar)
 		case msg := <-buzzerChan:
 			var jsonData map[string]interface{}
-			if err := json.Unmarshal([]byte(msg), &jsonData); err != nil {
+			unmarshalMsg := strings.Replace(msg, "buzzer ", "", 1)
+			if err := json.Unmarshal([]byte(unmarshalMsg), &jsonData); err != nil {
 				logWithTimestamp("Invalid JSON:", err)
 				continue
 			}
