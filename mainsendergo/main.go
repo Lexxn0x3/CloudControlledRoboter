@@ -255,6 +255,9 @@ func handleConnection(conn net.Conn) {
 				rosmaster = rosmasterlib.NewRosmaster("/dev/myserial", 115200)
 				defer rosmaster.Close()
 				rosmaster.SetBeep(100)
+				rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
+				rosmaster.SetColorfulEffect(0, 255, 255)
+				rosmaster.SetColorfulEffect(6, 255, 255)
 
 				go streamhandlers.HandleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
 				go streamhandlers.HandleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
@@ -272,6 +275,7 @@ func handleConnection(conn net.Conn) {
 
 		case <-doneReadingChan:
 			rosmaster.SetMotor(0, 0, 0, 0)
+			rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
 			rosmaster.BlockedHealthcheck = true
 			threeBeep()
 			logWithTimestamp("Connection closed by client.")
@@ -279,6 +283,7 @@ func handleConnection(conn net.Conn) {
 			return
 		case <-stopChan:
 			rosmaster.SetMotor(0, 0, 0, 0)
+			rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
 			rosmaster.BlockedHealthcheck = true
 			threeBeep()
 			logWithTimestamp("Connection closed due to stop chan receive.")

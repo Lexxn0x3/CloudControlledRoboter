@@ -83,13 +83,13 @@ func runHealthcheck() {
 }
 
 func startJSONServer() {
-	ln, err := net.Listen("tcp", "localhost:8081")
+	ln, err := net.Listen("tcp", "0.0.0.0:4200")
 	if err != nil {
 		logWithTimestamp("Error setting up JSON TCP server:", err)
 		return
 	}
 	defer ln.Close()
-	logWithTimestamp("JSON TCP server listening at localhost:8081")
+	logWithTimestamp("JSON TCP server listening at 0.0.0.0:4200")
 
 	for {
 		conn, err := ln.Accept()

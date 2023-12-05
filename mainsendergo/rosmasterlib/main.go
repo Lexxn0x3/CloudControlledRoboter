@@ -19,6 +19,8 @@ type Rosmaster struct {
 	FUNC_MOTOR         byte
 	FUNC_MOTION        byte
 	FUNC_BEEP          byte
+	FUNC_RGB           byte
+	FUNC_RGB_EFFECT    byte
 	__delay_time       float64
 	__debug            bool
 	BlockedHealthcheck bool
@@ -33,16 +35,18 @@ func NewRosmaster(comPort string, baudRate int) *Rosmaster {
 		log.Fatal(err)
 	}
 	rm := &Rosmaster{
-		port:           port,
-		head:           0xFF,
-		deviceID:       0xFC,
-		complement:     0,
-		batteryVoltage: 0,
-		FUNC_MOTOR:     0x10,
-		FUNC_MOTION:    0x12,
-		FUNC_BEEP:      0x02,
-		__delay_time:   0.002,
-		__debug:        false,
+		port:            port,
+		head:            0xFF,
+		deviceID:        0xFC,
+		complement:      0,
+		batteryVoltage:  0,
+		FUNC_MOTOR:      0x10,
+		FUNC_MOTION:     0x12,
+		FUNC_RGB:        0x05,
+		FUNC_RGB_EFFECT: 0x06,
+		FUNC_BEEP:       0x02,
+		__delay_time:    0.002,
+		__debug:         true,
 	}
 
 	//calc complement
@@ -280,6 +284,83 @@ func (rm *Rosmaster) SetBeep(onTime int) {
 
 		if rm.__debug {
 			log.Println("beep:", cmd)
+		}
+
+		time.Sleep(time.Duration(rm.__delay_time) * time.Second)
+	}
+
+	tryCmd()
+}
+
+func (rm *Rosmaster) SetColorfulLamps(ledID, red, green, blue byte) {
+	tryCmd := func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Println("---set_colorful_lamps error!---")
+			}
+		}()
+
+		cmd := []byte{
+			rm.head,
+			rm.deviceID,
+			0x00,
+			rm.FUNC_RGB,
+			ledID,
+			red,
+			green,
+			blue,
+		}
+
+		cmd[2] = byte(len(cmd) - 1)
+		checksum := rm.sum(cmd, rm.complement)
+		cmd = append(cmd, checksum)
+
+		err := rm.writeSerial(cmd)
+		if err != nil {
+			log.Println("Error writing rgb command to serial port:", err)
+			return
+		}
+
+		if rm.__debug {
+			log.Printf("rgb: %v\n", cmd)
+		}
+
+		time.Sleep(time.Duration(rm.__delay_time) * time.Second)
+	}
+
+	tryCmd()
+}
+
+func (rm *Rosmaster) SetColorfulEffect(effect, speed, parm byte) {
+	tryCmd := func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Println("---set_colorful_effect error!---")
+			}
+		}()
+
+		cmd := []byte{
+			rm.head,
+			rm.deviceID,
+			0x00,
+			rm.FUNC_RGB_EFFECT,
+			effect,
+			speed,
+			parm,
+		}
+
+		cmd[2] = byte(len(cmd) - 1)
+		checksum := rm.sum(cmd, rm.complement)
+		cmd = append(cmd, checksum)
+
+		err := rm.writeSerial(cmd)
+		if err != nil {
+			log.Println("Error writing rgb effect command to serial port:", err)
+			return
+		}
+
+		if rm.__debug {
+			log.Printf("rgb_effect: %v\n", cmd)
 		}
 
 		time.Sleep(time.Duration(rm.__delay_time) * time.Second)
