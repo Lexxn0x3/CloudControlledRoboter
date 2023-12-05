@@ -213,7 +213,7 @@ func (lidar *RPLidar) IterMeasurements() (<-chan Measurement, error) {
 				if err == io.EOF {
 					continue
 				}
-				log.Printf("Error reading measurement: %v", err)
+				log.Printf("WARN reading measurement: %v; MAybe main routine exited", err)
 				return
 			}
 
