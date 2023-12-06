@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -28,12 +29,14 @@ type Motor struct {
 var motorChan = make(chan string)
 
 type Lightbar struct {
-	Mode   bool   `json:"mode" mapstructure:"mode"`
-	LedID  string `json:"ledid" mapstructure:"ledid"`
-	RGB    string `json:"rgb" mapstructure:"rgb"`
-	Effect string `json:"effect" mapstructure:"effect"`
-	Speed  string `json:"speed" mapstructure:"speed"`
-	Parm   string `json:"parm" mapstructure:"parm"`
+	Mode   bool `json:"mode" mapstructure:"mode"`
+	LedID  byte `json:"ledid" mapstructure:"ledid"`
+	R      byte `json:"red" mapstructure:"red"`
+	G      byte `json:"green" mapstructure:"green"`
+	B      byte `json:"blue" mapstructure:"blue"`
+	Effect byte `json:"effect" mapstructure:"effect"`
+	Speed  byte `json:"speed" mapstructure:"speed"`
+	Parm   byte `json:"parm" mapstructure:"parm"`
 }
 
 var lightbarChan = make(chan string)
@@ -47,10 +50,13 @@ var buzzerChan = make(chan string)
 var rosmaster *rosmasterlib.Rosmaster
 
 func main() {
+	listenPort := flag.String("port", "6969", "port to listen on")
+	flag.Parse()
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	ln, err := net.Listen("tcp", "0.0.0.0:6969")
+	ln, err := net.Listen("tcp", "0.0.0.0:"+*listenPort)
 	if err != nil {
 		logWithTimestamp("Error setting up TCP server:", err)
 		return
@@ -67,7 +73,7 @@ func main() {
 		_, ok := <-stopChan
 		if ok {
 			close(stopChan)
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1000 * time.Millisecond)
 		}
 		return
 	}()
@@ -81,6 +87,7 @@ func main() {
 		logWithTimestamp("Connection accepted")
 
 		go handleConnection(conn)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -118,6 +125,11 @@ func handleIncomingJson() {
 				continue
 			}
 			logWithTimestamp("Received lightbar:", lightbar)
+			if lightbar.Mode {
+				rosmaster.SetColorfulEffect(lightbar.Effect, lightbar.Speed, lightbar.Parm)
+			} else {
+				rosmaster.SetColorfulLamps(lightbar.LedID, lightbar.R, lightbar.B, lightbar.B)
+			}
 		case msg := <-buzzerChan:
 			var jsonData map[string]interface{}
 			unmarshalMsg := strings.Replace(msg, "buzzer ", "", 1)
@@ -131,7 +143,9 @@ func handleIncomingJson() {
 				logWithTimestamp("Error decoding JSON:", err)
 				continue
 			}
-			logWithTimestamp("Received buzzer:", buzzer)
+			logWithTimestamp("Received buzzer:", buzzer.Duration)
+
+			rosmaster.SetBeep(buzzer.Duration)
 		}
 	}
 }
@@ -146,7 +160,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 	lastHealthCheckActive := healthCheckActive
 
 	var lastTimestamp int64
-	timer := time.NewTimer(3 * time.Second)
+	timer := time.NewTimer(100 * time.Millisecond)
 	logWithTimestamp("Health check routine started")
 
 	for {
@@ -161,7 +175,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 			lastHealthCheckActive = healthCheckActive
 			healthCheckActive = true
 			if lastHealthCheckActive != healthCheckActive {
-				timer.Reset(3 * time.Second)
+				timer.Reset(100 * time.Millisecond)
 			}
 
 			if strings.HasPrefix(msg, "healthcheck") {
@@ -180,9 +194,9 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 					continue
 				}
 				lastTimestamp = timestamp
-				logWithTimestamp("Health check passed")
+				//logWithTimestamp("Health check passed")
 				rosmaster.BlockedHealthcheck = false
-				timer.Reset(3 * time.Second)
+				timer.Reset(100 * time.Millisecond)
 			}
 		case <-stopChan:
 			logWithTimestamp("Health check routine stopped")
@@ -202,7 +216,7 @@ func handleConnection(conn net.Conn) {
 	go func() {
 		scanner := bufio.NewScanner(conn)
 		for {
-			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 			if scanner.Scan() {
 				text := scanner.Text()
 				if strings.HasPrefix(text, "healthcheck") {
@@ -226,6 +240,8 @@ func handleConnection(conn net.Conn) {
 				}
 				scanner = bufio.NewScanner(conn)
 			}
+
+			time.Sleep(10 * time.Millisecond)
 		}
 		close(doneReadingChan)
 	}()
@@ -255,6 +271,9 @@ func handleConnection(conn net.Conn) {
 				rosmaster = rosmasterlib.NewRosmaster("/dev/myserial", 115200)
 				defer rosmaster.Close()
 				rosmaster.SetBeep(100)
+				rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
+				rosmaster.SetColorfulEffect(0, 255, 255)
+				rosmaster.SetColorfulEffect(6, 255, 255)
 
 				go streamhandlers.HandleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
 				go streamhandlers.HandleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
@@ -272,20 +291,24 @@ func handleConnection(conn net.Conn) {
 
 		case <-doneReadingChan:
 			rosmaster.SetMotor(0, 0, 0, 0)
+			rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
 			rosmaster.BlockedHealthcheck = true
+			rosmaster.SetColorfulEffect(0, 255, 255)
 			threeBeep()
 			logWithTimestamp("Connection closed by client.")
 			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		case <-stopChan:
 			rosmaster.SetMotor(0, 0, 0, 0)
+			rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
 			rosmaster.BlockedHealthcheck = true
+			rosmaster.SetColorfulEffect(0, 255, 255)
 			threeBeep()
 			logWithTimestamp("Connection closed due to stop chan receive.")
 			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		}
-
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 func threeBeep() {
