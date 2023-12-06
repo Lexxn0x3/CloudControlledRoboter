@@ -18,10 +18,10 @@ nav_order: 2
    - [Sending Messages](#sending-messages)
    - [Receiving Messages](#receiving-messages)
    - [Closing the Connection](#closing-the-connection)
-4. [Security Considerations](#security-considerations)
-5. [Troubleshooting](#troubleshooting)
-6. [Examples](#examples)
-7. [References](#references)
+4. [Optional Features](#optional-features)
+4. [Troubleshooting](#troubleshooting)
+5. [Examples](#examples)
+6. [References](#references)
 
 ## Introduction
 
@@ -42,79 +42,105 @@ No specific installation is required for WebSocket on the client side. It is nat
 
 ### Creating a WebSocket Connection
 
-```bash
-// Create a WebSocket connection
-const socket = new WebSocket('ws://example.com:5001');
 
-// Event listener for when the connection is open
-socket.addEventListener('open', (event) => {
-    console.log('WebSocket connection opened');
-});
-´´´
+
+      // Create a WebSocket connection
+      const socket = new WebSocket('ws://127.0.0.1:5002');
+
+      // Event listener for when the connection is open
+      socket.onopen = () => {
+          console.log('WebSocket connection opened');
+      };
+
+
+### Error handling
+
+
+       //Event listener for when error occurs
+       socket.onerror = (error) => {
+      console.error('Camera WebSocket error:', error);
+    };
+
 
 ### Sending Messages
 
-```bash
-// Send a message to the server
-const messageToSend = 'Hello, server!';
-socket.send(messageToSend);
-´´´
+   
+      // Send a message to the server
+      const messageToSend = 'Hello, server!';
+      socket.send(messageToSend);
+
 
 ### Receiving Messages
 
-```bash
-// Event listener for when a message is received
-socket.addEventListener('message', (event) => {
-    const receivedMessage = event.data;
-    console.log('Server says: ${receivedMessage}');
-});
-´´´
+      
+      // Event listener for when a message is received
+      socket.onmessage = (event) => {
+          const receivedMessage = event.data;
+          console.log('Server says: ${receivedMessage}');
+      };
+      
 
 ### Closing the Connection
 
-```bash
-// Close the WebSocket connection
-socket.close();
-´´´
+      
+      // Close the WebSocket connection
+      socket.close();
+            
 
+## Optional Features
 
-# Security Considerations
+These features could prove useful
 
-Use secure connections (wss://) for production environments.
-Validate and sanitize incoming data to prevent security vulnerabilities.
+### Reconnecting Websockets
 
+Install this [library](https://github.com/pladaria/reconnecting-websocket)
 
-# Troubleshooting
+      npm install --save reconnecting-websocket
+
+import it to the relevant file 
+
+      import ReconnectingWebSocket from 'reconnecting-websocket';
+
+and replace the method call with
+
+      const socket = new ReconnectingWebSocket(wsServerUrl);
+
+## Troubleshooting
 
 Check the browser console for errors.
 Use browser developer tools to inspect WebSocket connections.
 
-# Examples
-```bash
-// Example: Connect to a WebSocket server and send/receive messages
-const socket = new WebSocket('ws://example.com:5001');
+## Examples
 
-socket.addEventListener('open', (event) => {
-    console.log('WebSocket connection opened');
 
-    // Send a message to the server
-    const messageToSend = 'Hello, server!';
-    socket.send(messageToSend);
-});
+      // Example: Connect to a WebSocket server and send/receive messages
+      const socket = new WebSocket('ws://127.0.0.1:5002');
+      
+      socket.onopen = () => {
+          console.log('WebSocket connection opened');
+      
+          // Send a message to the server
+          const messageToSend = 'Hello, server!';
+          socket.send(messageToSend);
+      };
+      
+      socket.onmessage = (event) => {
+          const receivedMessage = event.data;
+          console.log(`Server says: ${receivedMessage}`);
+      };
 
-socket.addEventListener('message', (event) => {
-    const receivedMessage = event.data;
-    console.log(`Server says: ${receivedMessage}`);
-});
+      //Event listener for when error occurs
+      socket.onerror = (error) => {
+         console.error('Camera WebSocket error:', error);
+      };
+      
+      // Close the WebSocket connection after 5 seconds
+      setTimeout(() => {
+          socket.close();
+      }, 5000);
 
-// Close the WebSocket connection after 5 seconds
-setTimeout(() => {
-    socket.close();
-}, 5000);
-´´´
 
-# References
 
-```bash
-You can copy and paste this Markdown code into a Markdown file (e.g., `websocket-client-documentation.md`). Markdown files are typically saved with a `.md` extension.
-´´´
+## References
+
+- [WebSocket API MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
