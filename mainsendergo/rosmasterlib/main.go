@@ -24,6 +24,7 @@ type Rosmaster struct {
 	__delay_time       float64
 	__debug            bool
 	BlockedHealthcheck bool
+	ticker             *time.Ticker
 }
 
 func NewRosmaster(comPort string, baudRate int) *Rosmaster {
@@ -47,6 +48,7 @@ func NewRosmaster(comPort string, baudRate int) *Rosmaster {
 		FUNC_BEEP:       0x02,
 		__delay_time:    0.002,
 		__debug:         true,
+		ticker:          time.NewTicker(50 * time.Millisecond),
 	}
 
 	//calc complement
@@ -58,6 +60,7 @@ func NewRosmaster(comPort string, baudRate int) *Rosmaster {
 
 func (rm *Rosmaster) Close() {
 	rm.port.Close()
+	rm.ticker.Stop()
 }
 
 func (rm *Rosmaster) readSerial() {
@@ -114,6 +117,8 @@ func (rm *Rosmaster) readSerial() {
 }
 
 func (rm *Rosmaster) writeSerial(data []byte) error {
+	<-rm.ticker.C
+
 	_, err := rm.port.Write(data)
 	if err != nil {
 		log.Println("Error writing to serial port:", err)

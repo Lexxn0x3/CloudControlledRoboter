@@ -48,12 +48,19 @@ func HandleCameraStream(addr string, port string, doneChan chan struct{}, wg *sy
 func HandleLidarStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", addr, port))
+	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%s", addr, port))
+	if err != nil {
+		fmt.Println("Error resolving TCP address:", err)
+		return
+	}
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		fmt.Printf("Error connecting to LiDAR server at %s:%s: %v\n", addr, port, err)
 		return
 	}
 	defer conn.Close()
+	conn.SetNoDelay(true)
 
 	lidar := rplidar.NewRPLidar("/dev/rplidar", 115200, time.Second*3)
 	err = lidar.Connect()
@@ -100,11 +107,18 @@ func HandleLidarStream(addr string, port string, doneChan chan struct{}, wg *syn
 func HandleBatteryStream(addr string, port string, doneChan chan struct{}, wg *sync.WaitGroup, rm *rosmasterlib.Rosmaster) {
 	defer wg.Done()
 
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", addr, port))
+	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%s", addr, port))
+	if err != nil {
+		fmt.Println("Error resolving TCP address:", err)
+		return
+	}
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		fmt.Printf("Error connecting to Battery server at %s:%s: %v\n", addr, port, err)
 		return
 	}
+	conn.SetNoDelay(true)
 	defer conn.Close()
 	for {
 		select {

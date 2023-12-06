@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -49,10 +50,13 @@ var buzzerChan = make(chan string)
 var rosmaster *rosmasterlib.Rosmaster
 
 func main() {
+	listenPort := flag.String("port", "6969", "port to listen on")
+	flag.Parse()
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	ln, err := net.Listen("tcp", "0.0.0.0:6969")
+	ln, err := net.Listen("tcp", "0.0.0.0:"+*listenPort)
 	if err != nil {
 		logWithTimestamp("Error setting up TCP server:", err)
 		return
@@ -69,7 +73,7 @@ func main() {
 		_, ok := <-stopChan
 		if ok {
 			close(stopChan)
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1000 * time.Millisecond)
 		}
 		return
 	}()
@@ -83,6 +87,7 @@ func main() {
 		logWithTimestamp("Connection accepted")
 
 		go handleConnection(conn)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -155,7 +160,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 	lastHealthCheckActive := healthCheckActive
 
 	var lastTimestamp int64
-	timer := time.NewTimer(3 * time.Second)
+	timer := time.NewTimer(100 * time.Millisecond)
 	logWithTimestamp("Health check routine started")
 
 	for {
@@ -170,7 +175,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 			lastHealthCheckActive = healthCheckActive
 			healthCheckActive = true
 			if lastHealthCheckActive != healthCheckActive {
-				timer.Reset(3 * time.Second)
+				timer.Reset(100 * time.Millisecond)
 			}
 
 			if strings.HasPrefix(msg, "healthcheck") {
@@ -189,9 +194,9 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 					continue
 				}
 				lastTimestamp = timestamp
-				logWithTimestamp("Health check passed")
+				//logWithTimestamp("Health check passed")
 				rosmaster.BlockedHealthcheck = false
-				timer.Reset(3 * time.Second)
+				timer.Reset(100 * time.Millisecond)
 			}
 		case <-stopChan:
 			logWithTimestamp("Health check routine stopped")
@@ -211,7 +216,7 @@ func handleConnection(conn net.Conn) {
 	go func() {
 		scanner := bufio.NewScanner(conn)
 		for {
-			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 			if scanner.Scan() {
 				text := scanner.Text()
 				if strings.HasPrefix(text, "healthcheck") {
@@ -235,6 +240,8 @@ func handleConnection(conn net.Conn) {
 				}
 				scanner = bufio.NewScanner(conn)
 			}
+
+			time.Sleep(10 * time.Millisecond)
 		}
 		close(doneReadingChan)
 	}()
@@ -286,6 +293,7 @@ func handleConnection(conn net.Conn) {
 			rosmaster.SetMotor(0, 0, 0, 0)
 			rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
 			rosmaster.BlockedHealthcheck = true
+			rosmaster.SetColorfulEffect(0, 255, 255)
 			threeBeep()
 			logWithTimestamp("Connection closed by client.")
 			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
@@ -294,12 +302,13 @@ func handleConnection(conn net.Conn) {
 			rosmaster.SetMotor(0, 0, 0, 0)
 			rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
 			rosmaster.BlockedHealthcheck = true
+			rosmaster.SetColorfulEffect(0, 255, 255)
 			threeBeep()
 			logWithTimestamp("Connection closed due to stop chan receive.")
 			closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
 			return
 		}
-
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 func threeBeep() {

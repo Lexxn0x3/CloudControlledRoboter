@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -36,25 +37,49 @@ type Buzzer struct {
 	Duration int `json:"buzzer" mapstructure:"buzzer"`
 }
 
-var targetConnection *net.Conn
+var targetConnection *net.TCPConn
+
+var healthCheckTicker *time.Ticker
 
 func main() {
+	targetPointer := flag.String("target", "false", "ip adress of the target robot")
+	listenPortPointer := flag.String("listenport", "4200", "port to listen for JSON objects")
+	targetPortPointer := flag.String("targetport", "6969", "port to connect to")
+	portPointer := flag.String("streamport", "false", "start port of streams")
+	flag.Parse()
+
+	healthCheckTicker = time.NewTicker(50 * time.Millisecond)
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter target IP address: ")
-	ip, _ := reader.ReadString('\n')
-	ip = strings.TrimSpace(ip)
 
-	fmt.Print("Enter port for streams: ")
-	portStr, _ := reader.ReadString('\n')
-	portStr = strings.TrimSpace(portStr)
+	targetIP := strings.TrimSpace(*targetPointer)
+	if targetIP == "false" {
+		fmt.Print("Enter target IP address: ")
+		targetIp, _ := reader.ReadString('\n')
+		targetIp = strings.TrimSpace(targetIp)
+	}
 
-	addr := ip + ":6969"
-	currentConnection, err := net.Dial("tcp", addr)
+	portStr := strings.TrimSpace(*portPointer)
+	if portStr == "false" {
+		fmt.Print("Enter port for streams: ")
+		portStr, _ := reader.ReadString('\n')
+		portStr = strings.TrimSpace(portStr)
+	}
+
+	targetPort := strings.TrimSpace(*targetPortPointer)
+
+	addr := targetIP + ":" + targetPort
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
+	if err != nil {
+		logWithTimestamp("Error resolving TCP address:", err)
+		return
+	}
+	currentConnection, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		logWithTimestamp("Error connecting to server:", err)
 		return
 	}
 	defer currentConnection.Close()
+	currentConnection.SetNoDelay(true)
 	logWithTimestamp("Connected to", addr)
 
 	_, err = currentConnection.Write([]byte("startstreams " + portStr + "\n"))
@@ -63,29 +88,34 @@ func main() {
 		return
 	}
 
-	targetConnection = &currentConnection
+	targetConnection = currentConnection
 	// Start a new TCP server to handle JSON objects
-	go startJSONServer()
+	listenPort := strings.TrimSpace(*listenPortPointer)
+	go startJSONServer(listenPort)
 	go runHealthcheck()
 
-	select {}
+	for {
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func runHealthcheck() {
 	for {
-		msg := "healthcheck " + strconv.FormatInt(time.Now().Unix(), 10) + "\n"
+		<-healthCheckTicker.C
+		msg := "healthcheck " + strconv.FormatInt(time.Now().UnixNano(), 10) + "\n"
 		_, err := (*targetConnection).Write([]byte(msg))
 		if err != nil {
 			logWithTimestamp("Error sending healthcheck message:", err)
 			return
 		}
-		logWithTimestamp("Sent healthcheck message:", strings.Split(msg, "\n")[0])
-		time.Sleep(2 * time.Second)
+		//logWithTimestamp("Sent healthcheck message:", strings.Split(msg, "\n")[0])
+		//time.Sleep(50 * time.Millisecond)
 	}
 }
 
-func startJSONServer() {
-	ln, err := net.Listen("tcp4", "0.0.0.0:4200")
+func startJSONServer(port string) {
+
+	ln, err := net.Listen("tcp4", "0.0.0.0:"+port)
 	if err != nil {
 		logWithTimestamp("Error setting up JSON TCP server:", err)
 		return
@@ -109,7 +139,7 @@ func handleJSONConnection(conn net.Conn) {
 
 	scanner := bufio.NewScanner(conn)
 	for {
-		conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+		conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 		if scanner.Scan() {
 			text := scanner.Text()
 			var jsonData map[string]interface{}
@@ -153,6 +183,7 @@ func handleJSONConnection(conn net.Conn) {
 			}
 			scanner = bufio.NewScanner(conn)
 		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
