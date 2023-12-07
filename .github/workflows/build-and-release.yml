@@ -156,7 +156,6 @@ jobs:
           if [ -f "./artifacts/rust-binary/broker" ]; then
               echo "File exists."
               rm ./build/broker
-              rm ./build/broker
               mv ./artifacts/rust-binary/broker ./build/broker
               git add ./build/broker
           fi
