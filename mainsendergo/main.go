@@ -160,7 +160,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 	lastHealthCheckActive := healthCheckActive
 
 	var lastTimestamp int64
-	timer := time.NewTimer(100 * time.Millisecond)
+	timer := time.NewTimer(150 * time.Millisecond)
 	logWithTimestamp("Health check routine started")
 
 	for {
@@ -175,7 +175,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 			lastHealthCheckActive = healthCheckActive
 			healthCheckActive = true
 			if lastHealthCheckActive != healthCheckActive {
-				timer.Reset(100 * time.Millisecond)
+				timer.Reset(150 * time.Millisecond)
 			}
 
 			if strings.HasPrefix(msg, "healthcheck") {
@@ -196,7 +196,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 				lastTimestamp = timestamp
 				//logWithTimestamp("Health check passed")
 				rosmaster.BlockedHealthcheck = false
-				timer.Reset(100 * time.Millisecond)
+				timer.Reset(150 * time.Millisecond)
 			}
 		case <-stopChan:
 			logWithTimestamp("Health check routine stopped")
@@ -282,7 +282,7 @@ func handleConnection(conn net.Conn) {
 				healthCheckChan <- "healthcheck 0"
 			} else if strings.HasPrefix(strings.ToLower(cmd), "stopstreams") {
 				logWithTimestamp("Received stopstreams command")
-				closeAllChannels(cameraDoneChan, lidarDoneChan, batteryDoneChan)
+				closeAllChannels(stopChan)
 
 				wg.Wait()
 				logWithTimestamp("All streams stopped")
