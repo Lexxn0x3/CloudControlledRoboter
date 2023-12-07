@@ -40,10 +40,12 @@ cargo run -- --single-connection-port 3001 --multi-connection-port 4001 --debug-
 
 ## Command-Line Arguments
 The program accepts the following arguments:
-- `--single-connection-port <PORT>`: Sets the server port (default: 3001).
-- `--multi-connection-port <PORT>`: Sets the client port (default: 4001).
-- `--debug-level <LEVEL>`: Sets the debug level. Possible values are debug, info, error (default: info).
-- `--buffer-size <SIZE>`: Sets the buffer size in bytes (default: 512000).
+- `--single-connection-port <PORT>` (short: `-s`): Sets the server port for single connections. Default is 3001.
+- `--multi-connection-port <PORT>` (short: `-m`): Sets the server port for multiple connections. Default is 9001.
+- `--websocket-connection-port <PORT>` (short: `-m`): Sets the websocket port for multiple connections. Default is 5001.
+- `--debug-level <LEVEL>` (short: `-d`): Sets the logging debug level. Possible values are 'debug', 'info', 'error'. Default is 'info'.
+- `--buffer-size <SIZE>` (short: `-b`): Sets the buffer size in bytes. Default is 512000.
+- `--no-websocket` (short: `-n`): Disables the websocket connection functionality.
 
 For example, to start the program with a custom server port and buffer size, you would run:
 ```bash
@@ -55,4 +57,4 @@ Or with Cargo:
 cargo run -- --single-connection-port 3020 --buffer-size 8192
 ```
 
-Replace `<PORT>`, `<LEVEL>`, and `<SIZE>` with your desired configurations.
+Replace `<PORT>`, `<LEVEL>`, `<SIZE>`, and `<NO_WEBSOCKET>` with your desired configurations.

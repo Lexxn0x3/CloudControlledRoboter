@@ -1,4 +1,5 @@
 mod config;
+mod websocket;
 
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
@@ -12,12 +13,12 @@ use env_logger::{Builder, Env};
 
 fn main()
 {
+    //test
     //Get config from Args
     let config = config::parse_arguments();
 
     // Initialize the logger with the specified level
     Builder::from_env(Env::default().default_filter_or(config.debug_level)).init();
-
 
     let client_senders = Arc::new(Mutex::new(vec![]));
 
@@ -27,7 +28,23 @@ fn main()
         single_connection_listener(client_senders_clone, config.single_connection_port, config.buffer_size);
     });
 
-    multi_conection_listener(&client_senders, config.multi_connection_port);
+    // Clone client_senders for the multi_connection_listener and start it in a separate thread
+    let client_senders_clone_for_multi = Arc::clone(&client_senders);
+    thread::spawn(move || {
+        multi_conection_listener(&client_senders_clone_for_multi, config.multi_connection_port);
+    });
+
+    if  !config.no_websocket
+    {
+        // Delay the start of the WebSocket server
+        thread::sleep(std::time::Duration::from_secs(1));
+        websocket::start_websocket("127.0.0.1", config.multi_connection_port, config.buffer_size, config.websocket_connection_port);
+    }
+
+    // Keep the main thread alive
+    loop {
+        thread::sleep(std::time::Duration::from_secs(60)); // Sleep for a minute in each iteration
+    }
 }
 
 fn multi_conection_listener(client_senders: &Arc<Mutex<Vec<Sender<Vec<u8>>>>>, port: u16) {
@@ -37,6 +54,7 @@ fn multi_conection_listener(client_senders: &Arc<Mutex<Vec<Sender<Vec<u8>>>>>, p
     for stream in multi_listener.incoming() {
         let client_senders_clone = Arc::clone(&client_senders);
         if let Ok(stream) = stream {
+            stream.set_nodelay(true).expect("set_nodelay call failed");
             debug!("Accepted new multi connection from {}:{}", stream.peer_addr().unwrap().ip(), stream.peer_addr().unwrap().port());
 
             let (client_tx, client_rx) = mpsc::channel();
