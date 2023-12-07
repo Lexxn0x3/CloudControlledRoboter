@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MJPEG Stream via WebSocket</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        #stream {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Maintain aspect ratio */
+        }
+        #connection-form {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="connection-form">
+        <input type="text" id="websocket-address" placeholder="WebSocket IP:Port" />
+        <button id="connect-button">Connect</button>
+    </div>
+    <img id="stream" src="" alt="MJPEG Stream">
+    <script src="websocket-stream.js"></script>
+</body>
+</html>
