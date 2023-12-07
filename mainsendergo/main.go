@@ -128,7 +128,7 @@ func handleIncomingJson() {
 			if lightbar.Mode {
 				rosmaster.SetColorfulEffect(lightbar.Effect, lightbar.Speed, lightbar.Parm)
 			} else {
-				rosmaster.SetColorfulLamps(lightbar.LedID, lightbar.R, lightbar.B, lightbar.B)
+				rosmaster.SetColorfulLamps(lightbar.LedID, lightbar.R, lightbar.G, lightbar.B)
 			}
 		case msg := <-buzzerChan:
 			var jsonData map[string]interface{}
