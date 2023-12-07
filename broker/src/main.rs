@@ -5,6 +5,7 @@ use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::net::{TcpListener, TcpStream};
+use std::io;
 use std::io::{Read, Write, Error};
 use std::sync::mpsc::{Sender};
 use env_logger;
@@ -25,7 +26,7 @@ fn main()
     // Start single_connection_listener in a separate thread
     let client_senders_clone = Arc::clone(&client_senders);
     thread::spawn(move || {
-        single_connection_listener(client_senders_clone, config.single_connection_port, config.buffer_size);
+        single_connection_listener(client_senders_clone, config.single_connection_port, config.buffer_size, config.single_connection_timeout);
     });
 
     // Clone client_senders for the multi_connection_listener and start it in a separate thread
@@ -67,7 +68,7 @@ fn multi_conection_listener(client_senders: &Arc<Mutex<Vec<Sender<Vec<u8>>>>>, p
     }
 }
 
-fn single_connection_listener(client_senders: Arc<Mutex<Vec<Sender<Vec<u8>>>>>, port: u16, buffer_size: usize) {
+fn single_connection_listener(client_senders: Arc<Mutex<Vec<Sender<Vec<u8>>>>>, port: u16, buffer_size: usize, single_connection_timeout: u64) {
     let single_listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
     info!("Single-connection TCP listener started on {}:{}", single_listener.local_addr().unwrap().ip(), single_listener.local_addr().unwrap().port());
 
@@ -76,7 +77,7 @@ fn single_connection_listener(client_senders: Arc<Mutex<Vec<Sender<Vec<u8>>>>>, 
         match single_listener.accept() {
             Ok((stream, _)) => {
                 debug!("Accepted single connection from {}:{}", stream.peer_addr().unwrap().ip(), stream.peer_addr().unwrap().port());
-                if let Err(e) = handle_single_connection(stream, client_senders_clone, buffer_size) {
+                if let Err(e) = handle_single_connection(stream, client_senders_clone, buffer_size, single_connection_timeout) {
                     error!("Error handling single connection: {}", e);
                     // Here you can handle any cleanup or reset actions needed
                 }
@@ -86,8 +87,9 @@ fn single_connection_listener(client_senders: Arc<Mutex<Vec<Sender<Vec<u8>>>>>, 
     }
 }
 
-fn handle_single_connection(mut stream: TcpStream, clients: Arc<Mutex<Vec<mpsc::Sender<Vec<u8>>>>>, buffer_size: usize) -> Result<(), Error> {
+fn handle_single_connection(mut stream: TcpStream, clients: Arc<Mutex<Vec<mpsc::Sender<Vec<u8>>>>>, buffer_size: usize, single_connection_timeout: u64) -> Result<(), Error> {
     debug!("Single connection handler started.");
+    stream.set_read_timeout(Some(std::time::Duration::new(single_connection_timeout, 0)))?; // Set a 30-second read timeout
     let mut buffer = vec![0; buffer_size];  // Dynamic buffer based on buffer_size
     loop {
         match stream.read(&mut buffer) {
@@ -108,6 +110,10 @@ fn handle_single_connection(mut stream: TcpStream, clients: Arc<Mutex<Vec<mpsc::
                 for i in clients_to_remove.iter().rev() {
                     clients.remove(*i);
                 }
+            },
+            Err(e) if e.kind() == io::ErrorKind::TimedOut => {
+                debug!("Connection timed out.");
+                break; // Break the loop to allow accepting new connections
             },
             Err(e) => {
                 error!("Error reading from single connection: {}", e);

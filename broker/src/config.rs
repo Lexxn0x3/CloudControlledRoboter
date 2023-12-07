@@ -4,6 +4,7 @@ pub struct Config {
     pub single_connection_port: u16,
     pub multi_connection_port: u16,
     pub websocket_connection_port: u16,
+    pub single_connection_timeout: u64,
     pub no_websocket: bool,
     pub debug_level: String,
     pub buffer_size: usize,
@@ -53,6 +54,15 @@ pub fn parse_arguments() -> Config {
             .validator(|v| v.parse::<usize>()
                 .map(|_| ())
                 .map_err(|_| String::from("Buffer size must be an integer"))))
+        .arg(Arg::with_name("single-connection-timeout")
+            .long("single-connection-timeout")
+            .short('t')  // Changed to a char
+            .help("Sets the timeout for the single connection. If the single connection doesnt send data for default 5 seconds it gets disconnected")
+            .takes_value(true)
+            .default_value("5")
+            .validator(|v| v.parse::<usize>()
+                .map(|_| ())
+                .map_err(|_| String::from("Timeout must be an integer"))))
         .get_matches();
 
     Config
@@ -61,6 +71,7 @@ pub fn parse_arguments() -> Config {
         multi_connection_port: matches.value_of("multi-connection-port").unwrap().parse().unwrap(),
         websocket_connection_port: matches.value_of("websocket-connection-port").unwrap().parse().unwrap(),
         no_websocket: matches.is_present("no-websocket"),
+        single_connection_timeout: matches.value_of("single-connection-timeout").unwrap().parse().unwrap(),
         debug_level: matches.value_of("debug-level").unwrap().to_string(),
         buffer_size: matches.value_of("buffer-size").unwrap().parse().unwrap(),
     }
