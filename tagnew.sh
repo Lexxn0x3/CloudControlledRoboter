@@ -32,7 +32,7 @@ echo "Creating and pushing new tag: $new_tag"
 git tag $new_tag
 
 # Push the new tag
-git push origin $new_tag
+git push origin main $new_tag
 
 echo "Tag $new_tag created and pushed successfully."
 

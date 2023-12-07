@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'TcpBroker/**'
+      - 'broker/**'
       - 'mainsendergo/**'
       - 'mainsenderservergo/**'
 
@@ -28,7 +28,7 @@ jobs:
         with:
           filters: |
             rust:
-              - 'TcpBroker/**'
+              - 'broker/**'
             mainsendergo:
               - 'mainsendergo/**'
             mainsenderservergo:
@@ -55,25 +55,15 @@ jobs:
       - name: Build Rust Binary
         run: |
           mkdir -p build
-          RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --manifest-path repository/TcpBroker/Broker/Cargo.toml --target x86_64-unknown-linux-gnu --target-dir build/
+          RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --manifest-path repository/broker/Cargo.toml --target x86_64-unknown-linux-gnu --target-dir build/
 
-      - name: Commit and Push Binary
-        run: |
-          cd repository
-          git reset --hard
-          git config --global user.email "mattzi@users.noreply.github.com"
-          git config --global user.name "Binary Builder"
-          git fetch origin binaries-branch
-          git switch binaries-branch || git switch -c binaries-branch origin/binaries-branch
-          rm ./build/broker
-          mv ../build/x86_64-unknown-linux-gnu/release/broker ./build/broker
-          git add ./build/broker
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update Rust binary"
-            git push -u origin binaries-branch
-          fi
+
+      - name: Upload Rust to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rust-binary
+          path: ./build/x86_64-unknown-linux-gnu/release/broker
+          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
 
   build-mainsendergo:
     needs: changes
@@ -96,24 +86,12 @@ jobs:
           mkdir -p ../../build
           GOOS=linux GOARCH=arm64 go build -o ../../build/mainsendergo
 
-      - name: Commit and Push Binary
-        run: |
-          cd repository
-          git reset --hard
-          git config --global user.email "mattzi@users.noreply.github.com"
-          git config --global user.name "Binary Builder"
-          git fetch origin binaries-branch
-          git switch binaries-branch || git switch -c binaries-branch origin/binaries-branch
-          rm ./build/mainsendergo
-          mv ../build/mainsendergo ./build/mainsendergo
-          git add ./build/mainsendergo
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update mainsender binary"
-            git push -u origin binaries-branch
-          fi
-
+      - name: Upload mainsendergo to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: mainsendergo
+          path: ./build/mainsendergo
+          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
 
   build-mainsenderservergo:
     needs: changes
@@ -135,24 +113,13 @@ jobs:
           cd repository/mainsenderservergo
           mkdir -p ../../build
           GOOS=linux go build -o ../../build/mainsenderservergo
-          
-      - name: Commit and Push Binary
-        run: |
-          cd repository
-          git reset --hard
-          git config --global user.email "mattzi@users.noreply.github.com"
-          git config --global user.name "Binary Builder"
-          git fetch origin binaries-branch
-          git switch binaries-branch || git switch -c binaries-branch origin/binaries-branch
-          rm ./build/mainsenderservergo
-          mv ../build/mainsenderservergo ./build/mainsenderservergo
-          git add ./build/mainsenderservergo
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update mainsenderservergo binary"
-            git push -u origin binaries-branch
-          fi
+
+      - name: Upload mainsenderservergo to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: mainsenderservergo
+          path: ./build/mainsenderservergo
+          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
 
   prepare-binaries-for-release:
     needs: [build-rust, build-mainsendergo, build-mainsenderservergo]
@@ -164,41 +131,40 @@ jobs:
         with:
           ref: binaries-branch
 
-      - name: Upload Rust to Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: rust-binary
-          path: ./build/broker
-          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
-
-      - name: Upload mainsendergo to Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: mainsendergo
-          path: ./build/mainsendergo
-          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
-
-      - name: Upload mainsenderservergo to Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: mainsenderservergo
-          path: ./build/mainsenderservergo
-          if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
-
-  create-release:
-    needs: prepare-binaries-for-release
-    if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-    
       - name: Download all artifacts
         uses: actions/download-artifact@v3
         with:
           path: ./artifacts/
+
+      - name: Commit and Push Binary
+        run: |
+          git config --global user.email "mattzi@users.noreply.github.com"
+          git config --global user.name "Binary Builder"
+          ls -R
+          if [ -f "./artifacts/mainsendergo/mainsendergo" ]; then
+              echo "File exists."
+              rm ./build/mainsendergo
+              mv ./artifacts/mainsendergo/mainsendergo ./build/mainsendergo
+              git add ./build/mainsendergo
+          fi
+          if [ -f "./artifacts/mainsenderservergo/mainsenderservergo" ]; then
+              echo "File exists."
+              rm ./build/mainsenderservergo
+              mv ./artifacts/mainsenderservergo/mainsenderservergo ./build/mainsenderservergo
+              git add ./build/mainsenderservergo
+          fi
+          if [ -f "./artifacts/rust-binary/broker" ]; then
+              echo "File exists."
+              rm ./build/broker
+              mv ./artifacts/rust-binary/broker ./build/broker
+              git add ./build/broker
+          fi
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update mainsenderservergo binary"
+            git push -u origin binaries-branch
+          fi
 
       - name: Set execute permission for the script
         run: chmod +x ./tagnew.sh
@@ -215,6 +181,6 @@ jobs:
           token: ${{ secrets.MY_PAT }}
           tag_name: ${{ steps.create_tag.outputs.tag }}
           files: |
-            ./artifacts/rust-binary/broker
-            ./artifacts/mainsendergo/mainsendergo
-            ./artifacts/mainsenderservergo/mainsenderservergo
+            ./build/broker
+            ./build/mainsendergo
+            ./build/mainsenderservergo
