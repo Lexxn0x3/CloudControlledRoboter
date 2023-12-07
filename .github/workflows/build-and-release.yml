@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'TcpBroker/**'
+      - 'broker/**'
       - 'mainsendergo/**'
       - 'mainsenderservergo/**'
 
@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: rust-binary
-          path: /build/x86_64-unknown-linux-gnu/release/broker
+          path: ./build/x86_64-unknown-linux-gnu/release/broker
           if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
 
   build-mainsendergo:
@@ -140,6 +140,7 @@ jobs:
         run: |
           git config --global user.email "mattzi@users.noreply.github.com"
           git config --global user.name "Binary Builder"
+          ls -R
           if [ -f "./artifacts/mainsendergo/mainsendergo" ]; then
               echo "File exists."
               rm ./build/mainsendergo
