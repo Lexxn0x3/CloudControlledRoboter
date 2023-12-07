@@ -122,6 +122,8 @@ composer.lock
 *.bak
 *.tmp
 *~
+*.lock
+*.rs
 
 # Add .dat files #
 ##################
