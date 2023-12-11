@@ -15,20 +15,11 @@ Our microservice architecture is designed to handle real-time data streams from 
 
 ## Core Components
 
-### Data Ingestion Service
+### Broker service
 - **Purpose**: Acts as the entry point for sensor data streams.
-- **Technologies**:
-  - `asyncio` and `sockets` for handling TCP connections in Python.
-  - `confluent-kafka` for integrating with Kafka as a message broker.
 - **Functionality**:
   - Listens for incoming data on specified TCP ports.
-  - Processes and forwards the data to Kafka topics.
-
-### Kafka Message Broker
-- **Purpose**: Serves as a central hub for data streams, providing publish-subscribe capabilities.
-- **Functionality**:
-  - Decouples data producers (sensors) from consumers (other microservices).
-  - Ensures reliable delivery of messages and enables real-time data streaming.
+  - Processes and forwards the data to TCP or Websocket clients
 
 ### AI Processing Service (example)
 - **Purpose**: Consumes data from Kafka and applies AI models for analysis and decision-making.
@@ -48,22 +39,7 @@ Our microservice architecture is designed to handle real-time data streams from 
 ### Client Communication Service
 - **Purpose**: Interfaces with the Electron frontend application.
 - **Technologies**:
-  - WebSockets or gRPC for bi-directional communication.
+  - WebSockets for bi-directional communication.
 - **Functionality**:
   - Sends real-time data updates to the Electron app.
   - Receives user commands and forwards them to appropriate services.
-
-## Supporting Components
-
-### Containerization with Docker
-- Encapsulates each service into its own container, ensuring consistent environments.
-
-### Orchestration with Kubernetes (maybe)
-- Manages container deployment, scaling, and networking.
-
-### Continuous Integration and Deployment (CI/CD) (maybe)
-- Automates testing and deployment using Jenkins or GitHub Actions.
-
-## Conclusion
-
-This microservice architecture is designed to be scalable, resilient, and flexible, allowing for independent development and deployment of services, ease of scaling, and robustness in handling data streams.
