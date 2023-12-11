@@ -3,7 +3,7 @@ title: Lidar
 layout: default
 parent: MainsenderGo
 grand_parent: MicroServices
-nav_order: 1
+nav_order: 2
 ---
 
 # RPLidar Package Documentation for `mainsenderGo`

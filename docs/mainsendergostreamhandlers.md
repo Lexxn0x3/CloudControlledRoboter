@@ -3,7 +3,7 @@ title: Streamhandler
 layout: default
 parent: MainsenderGo
 grand_parent: MicroServices
-nav_order: 1
+nav_order: 3
 ---
 
 # Stream Handlers Documentation for `mainsenderGo`
