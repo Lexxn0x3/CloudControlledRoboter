@@ -1,9 +1,11 @@
+<!--
 ---
 title: Kafka
 layout: default
 parent: MicroServices
 nav_order: 1
 ---
+-->
 
 # Obsolete
 
