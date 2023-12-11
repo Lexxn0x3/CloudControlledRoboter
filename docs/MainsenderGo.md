@@ -10,7 +10,7 @@ nav_order: 4
 
 ## Overview
 
-This Go program implements a TCP server that listens for incoming connections on a specified port and handles JSON messages for controlling motors, lightbars, and a buzzer. It also manages health checks to monitor the connection's status.
+This Go program is a crucial component of our infrastructure, being the only program that runs directly on the robot. It implements a TCP server that listens for incoming connections on a specified port and handles JSON messages for controlling motors, lightbars, and a buzzer. Additionally, it manages health checks to monitor the connection's status.
 
 ## Structure and Functionality
 
@@ -59,6 +59,22 @@ To run the server:
 1. **Compile and Run**: Compile the Go code and run the resulting binary. Optionally, specify the port to listen on using the `-port` flag.
 2. **Client Connection**: Connect a client to the server's IP and port.
 3. **Data Transmission**: The client can send JSON-formatted messages to control motors, lightbars, and buzzers, and send commands to start/stop data streams.
+
+## Compiling for Different Architectures and Operating Systems
+
+To compile the Go program for a different architecture or operating system, use the `GOOS` and `GOARCH` environment variables. For example:
+
+- To compile for Windows on an AMD64 architecture:
+```bash
+GOOS=windows GOARCH=amd64 go build
+```
+
+- To compile for Linux on an ARM64 architecture, which is what we need for the robot:
+```bash
+GOOS=linux GOARCH=arm64 go build
+```
+
+Replace the values of `GOOS` and `GOARCH` as needed to target the desired platform.
 
 ## Notes
 
