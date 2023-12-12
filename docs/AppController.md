@@ -10,7 +10,7 @@ nav_order: 2
 
 ## Introduction
 
-This document provides documentation for the Robot Controller, a Python-based system that translates incoming WebSocket commands into robot-readable motor data, subsequently sent using TCP communication. The system is modularized into three main components: `appControlHandler`, `betterPrinting`, `tcpController`, `dataHandler` and `websocketController`.
+This document provides documentation for the Robot Controller, a Python-based system that translates incoming WebSocket commands into robot-readable motor data, subsequently sent using TCP communication. The system is modularized into four main components: AppControlHandler, TCPController, DataHandler, WebSocketController, and a fifth component, BetterPrinting, which provides a set of printing functions to enhance the readability of terminal output. These printing functions offer options for cleaner and more organized terminal messages, including informational, debugging, and error messages.
 
 ### Components
 
