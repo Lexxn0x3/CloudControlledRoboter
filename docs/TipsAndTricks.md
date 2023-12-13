@@ -60,7 +60,7 @@ It's generally more efficient to use the robot's command line for operations, as
 Terminal software such as Termius is highly beneficial for managing the robot's operations. It allows users to have multiple terminal windows open simultaneously in an organized arrangement. This setup makes it easier to oversee and handle various tasks efficiently, enhancing the overall workflow and productivity when interacting with the robot.
 
 ## LiDAR System
-- **Detection of Close Objects:** The LiDAR system struggles to detect objects that are very close to it. This limitation requires software-level handling to ensure close-proximity objects are appropriately accounted for in the robot's navigation and sensing algorithms.
+- **Detection of Close Objects:** The LiDAR system struggles to detect objects that are very close to it (range: 10cm to 10m). This limitation requires software-level handling to ensure close-proximity objects are appropriately accounted for in the robot's navigation and sensing algorithms.
 - **Obstructed Rear View:** The LiDAR's ability to perceive the area behind the vehicle is obstructed by the sound module. This necessitates software compensation to mitigate potential blind spots in the robot's environmental awareness.
 - **Latency in Data Acquisition:** The LiDAR system exhibits noticeable latency in data acquisition. The time it takes to complete a full rotation and update all points can be significant. This latency must be factored into the robot's movement and decision-making algorithms, especially considering the distance the robot can travel during one LiDAR cycle.
 
