@@ -1,47 +1,56 @@
 ---
-title: Services
+title: Autostart Service
 layout: default
-has_children: true
+has_children: false
 nav_order: 8
 ---
 
-# Overview over Services
+# Server Autostart Service
 
-Put .sh files into path: /opt/roboterteam1/downloadservice.sh 
+This documentation explains how to manage the `robotServerAutostart.service`, which is designed to automatically start, stop, and restart specific server applications as defined in the script `downloadservice.sh`. This service can be particularly useful for ensuring that essential applications are always running, especially after a system reboot.
 
+## Starting the Service
 
-#### FOR MAINSENDER:
-Move .service file to /etc/systemd/system/YOURNAME.service
+To start the `robotServerAutostart` service, execute the following command:
 
-```yaml
-sudo systemctl daemon-reload 
+```bash
+sudo systemctl start robotServerAutostart
 ```
 
-```yaml
-sudo systemctl start YOURNAME.service
+This will initiate the service as per the configuration specified in the service file.
+
+## Stopping the Service
+
+To stop the service, use the command:
+
+```bash
+sudo systemctl stop robotServerAutostart
 ```
 
-```yaml
-sudo systemctl enable YOURNAME.service
-```
-This now always starts the service on system startup
+This will halt all processes that were started by the `robotServerAutostart` service.
 
-#### FOR BROKER:
-Modify instance count in .sh
+## Restarting the Service
 
-Move .service file to /etc/systemd/system/YOURNAME@.service
+To restart the service, which is often needed after making changes to its configuration or the associated script, use:
 
-```yaml
-sudo systemctl daemon-reload 
+```bash
+sudo systemctl restart robotServerAutostart
 ```
 
-```yaml
-sudo systemctl start YOURNAME@
+After making changes to the service file, it's necessary to reload the systemd daemon:
+
+```bash
+sudo systemctl daemon-reload
 ```
 
-```yaml
-sudo systemctl enable YOURNAME@
-```
+## Editing the Service
 
-This now always starts the service on system startup with port and port + 6000:
-For the multiple instances the next ports are port + 10 and port + 10 + 6000
+The service can be edited by modifying its service file, typically located at `/etc/systemd/system/robotServerAutostart.service`. Ensure you have the necessary permissions to edit this file.
+
+## Editing the Download Script
+
+The script used by the service to start the applications can be found at `/opt/roboterteam1/downloadservice.sh`. You can edit this script to change which applications are downloaded or how they are started. Make sure to restart the service and reload the systemd daemon after making changes to this script.
+
+## Overview of the `robotServerAutostart` Service
+
+The `robotServerAutostart` service is designed to automatically handle the startup of certain server applications. It involves the script `downloadservice.sh` that downloads the necessary server binaries from a specified repository and starts them with predefined configurations. This ensures that your server applications are consistently running with the correct settings and are restarted automatically in case of a system reboot or service interruption.
