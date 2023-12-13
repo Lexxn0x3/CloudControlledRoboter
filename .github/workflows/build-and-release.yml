@@ -84,7 +84,7 @@ jobs:
         run: |
           cd repository/mainsendergo
           mkdir -p ../../build
-          GOOS=linux GOARCH=arm64 go build -o ../../build/mainsendergo
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o ../../build/mainsendergo
 
       - name: Upload mainsendergo to Artifacts
         uses: actions/upload-artifact@v3
@@ -112,7 +112,7 @@ jobs:
         run: |
           cd repository/mainsenderservergo
           mkdir -p ../../build
-          GOOS=linux go build -o ../../build/mainsenderservergo
+          CGO_ENABLED=0 GOOS=linux go build -o ../../build/mainsenderservergo
 
       - name: Upload mainsenderservergo to Artifacts
         uses: actions/upload-artifact@v3
