@@ -14,6 +14,11 @@ The `DataHandler` module, contained in the `DataHandler.py` file, is a crucial c
 
 ### Attributes
 
+- **stopFront**: A flag indicating if there is an obstacle in front of the robot.
+- **stopLeft**: A flag indicating if there is an obstacle on the left of the robot.
+- **stopRight**: A flag indicating if there is an obstacle on the right of the robot.
+- **stopFrontRight**: A flag indicating if there is an obstacle in the front-right of the robot.
+- **stopFrontLeft**: A flag indicating if there is an obstacle in the front-left of the robot.
 - **bot**: A reference to the main `Bot` instance for communication and control.
 - **bp**: An instance of the `BetterPrinting` class for improved console printing.
 

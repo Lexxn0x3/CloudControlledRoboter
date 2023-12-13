@@ -14,11 +14,6 @@ The `AppControlHandler` module, contained in the `AppControlHandler.py` file, is
 
 ### Attributes
 
-- **stopFront**: A flag indicating if there is an obstacle in front of the robot.
-- **stopLeft**: A flag indicating if there is an obstacle on the left of the robot.
-- **stopRight**: A flag indicating if there is an obstacle on the right of the robot.
-- **stopFrontRight**: A flag indicating if there is an obstacle in the front-right of the robot.
-- **stopFrontLeft**: A flag indicating if there is an obstacle in the front-left of the robot.
 - **i_print**: A boolean flag indicating whether informational prints are enabled (default is `True`).
 - **d_print**: A boolean flag indicating whether debugging prints are enabled (default is `True`).
 - **e_print**: A boolean flag indicating whether error prints are enabled (default is `True`).
@@ -33,13 +28,13 @@ The `AppControlHandler` module, contained in the `AppControlHandler.py` file, is
 Initializes the `Bot` instance.
 
 - **Parameters**:
+  - `info_print`: Flag for enabling/disabling informational prints (default is `True`).
+  - `debug_print`: Flag for enabling/disabling debugging prints (default is `True`).
+  - `error_print`: Flag for enabling/disabling error prints (default is `True`).
   - `tcp_ip`: IP address for TCP communication.
   - `tcp_port`: Port number for TCP communication.
   - `web_ip`: IP address for WebSocket communication.
   - `web_port`: Port number for WebSocket communication.
-  - `info_print`: Flag for enabling/disabling informational prints (default is `True`).
-  - `debug_print`: Flag for enabling/disabling debugging prints (default is `True`).
-  - `error_print`: Flag for enabling/disabling error prints (default is `True`).
 
 - **Usage**:
   ```python
