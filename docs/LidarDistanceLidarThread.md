@@ -1,9 +1,9 @@
 ---
-title: Lidar Data Thread
+title: LidarDataThread
 layout: default
 parent: LidarDistance
 grand_parent: MicroServices
-nav_order: 1
+nav_order: 2
 ---
 
 # Lidar Data Thread

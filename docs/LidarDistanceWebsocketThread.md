@@ -3,7 +3,7 @@ title: WebsocketThread
 layout: default
 parent: LidarDistance
 grand_parent: MicroServices
-nav_order: 3
+nav_order: 4
 ---
 
 # WebSocket Client Thread

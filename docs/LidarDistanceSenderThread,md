@@ -3,7 +3,7 @@ title: DistanceSenderThread
 layout: default
 parent: LidarDistance
 grand_parent: MicroServices
-nav_order: 2
+nav_order: 3
 ---
 
 # Distance Sender Thread
