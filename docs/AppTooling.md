@@ -1,5 +1,5 @@
 ---
-title: Framework Setup
+title: Project Tooling
 layout: default
 parent: App
 nav_order: 3
