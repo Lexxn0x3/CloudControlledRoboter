@@ -37,6 +37,10 @@ type Buzzer struct {
 	Duration int `json:"buzzer" mapstructure:"buzzer"`
 }
 
+type Laser struct {
+	Status bool `json:"laser" mapstructure:"laser"`
+}
+
 var targetConnection *net.TCPConn
 
 var healthCheckTicker *time.Ticker
@@ -197,6 +201,13 @@ func handleJSONConnection(conn net.Conn) {
 					continue
 				}
 				handleBuzzerData(buzzer)
+			} else if _, ok := jsonData["laser"]; ok {
+				var laser Laser
+				if err := mapstructure.Decode(jsonData, &laser); err != nil {
+					logWithTimestamp("Error decoding laser data:", err)
+					continue
+				}
+				handleLaserdata(laser)
 			} else {
 				logWithTimestamp("Unrecognized JSON object")
 			}
@@ -249,6 +260,19 @@ func handleBuzzerData(buzzer Buzzer) {
 		return
 	}
 	msg := "buzzer " + string(byteSlice) + "\n"
+
+	(*targetConnection).Write([]byte(msg))
+}
+
+func handleLaserdata(laser Laser) {
+	logWithTimestamp("Received laser data:", laser)
+	// Process buzzer data
+	byteSlice, err := json.Marshal(laser)
+	if err != nil {
+		logWithTimestamp("Error marshalling laser data:", err)
+		return
+	}
+	msg := "laser " + string(byteSlice) + "\n"
 
 	(*targetConnection).Write([]byte(msg))
 }

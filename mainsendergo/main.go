@@ -17,6 +17,10 @@ import (
 	"github.com/mattzi/mainsendergo/rosmasterlib"
 	"github.com/mattzi/mainsendergo/streamhandlers"
 	"github.com/mitchellh/mapstructure"
+
+	"periph.io/x/conn/v3/gpio"
+	"periph.io/x/host/v3"
+	"periph.io/x/host/v3/bcm283x"
 )
 
 type Motor struct {
@@ -49,7 +53,19 @@ var buzzerChan = make(chan string)
 
 var rosmaster *rosmasterlib.Rosmaster
 
+type Laser struct {
+	Status bool `json:"laser" mapstructure:"laser"`
+}
+
+var laserChannel = make(chan string)
+var gpioPinOut gpio.PinIO
+
 func main() {
+	if _, err := host.Init(); err != nil {
+		logWithTimestamp("Error initializing periph host:", err)
+		return
+	}
+
 	listenPort := flag.String("port", "6969", "port to listen on")
 	flag.Parse()
 
@@ -146,6 +162,29 @@ func handleIncomingJson() {
 			logWithTimestamp("Received buzzer:", buzzer.Duration)
 
 			rosmaster.SetBeep(buzzer.Duration)
+		case msg := <-laserChannel:
+			var jsonData map[string]interface{}
+			unmarshalMsg := strings.Replace(msg, "laser ", "", 1)
+			if err := json.Unmarshal([]byte(unmarshalMsg), &jsonData); err != nil {
+				logWithTimestamp("Invalid JSON:", err)
+				continue
+			}
+			var laser Laser
+			err := mapstructure.Decode(jsonData, &laser)
+			if err != nil {
+				logWithTimestamp("Error decoding JSON:", err)
+				continue
+			}
+
+			if laser.Status {
+				if err := bcm283x.GPIO13.Out(gpio.High); err != nil {
+					logWithTimestamp("Error setting GPIO13 high:", err)
+				}
+			} else {
+				if err := bcm283x.GPIO13.Out(gpio.Low); err != nil {
+					logWithTimestamp("Error setting GPIO13 high:", err)
+				}
+			}
 		}
 	}
 }
@@ -227,6 +266,8 @@ func handleConnection(conn net.Conn) {
 					lightbarChan <- text
 				} else if strings.HasPrefix(text, "motor") {
 					motorChan <- text
+				} else if strings.HasPrefix(text, "laser") {
+					laserChannel <- text
 				} else {
 					cmdChan <- text
 				}
