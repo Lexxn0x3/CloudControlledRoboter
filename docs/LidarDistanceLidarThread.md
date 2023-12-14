@@ -53,7 +53,6 @@ The Lidar Data Thread can be executed as part of the Lidar-Distance system. Ensu
 
 #### Part in the Code
 ```python
-# Example usage in LidarDistanceController.py
 lidar_data_buffer = pregenerate_lidar_data(maxLenBuffer)
 lidar_data_thread = LidarDataThread(lidarstreamIP, lidarstreamPort, lidar_data_buffer)
 lidar_data_thread.start()
