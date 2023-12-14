@@ -162,7 +162,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update mainsenderservergo binary"
+            git commit -m "Update newly build binaries"
             git push -u origin binaries-branch
           fi
 
