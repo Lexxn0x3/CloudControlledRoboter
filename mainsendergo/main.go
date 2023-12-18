@@ -19,8 +19,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"periph.io/x/conn/v3/gpio"
+	"periph.io/x/conn/v3/gpio/gpioreg"
 	"periph.io/x/host/v3"
-	"periph.io/x/host/v3/bcm283x"
 )
 
 type Motor struct {
@@ -177,20 +177,20 @@ func handleIncomingJson() {
 			}
 
 			    // Access a GPIO pin
-			pin := gpio.ByNumber(13) // Replace with your GPIO pin number
+			pin := gpioreg.ByName(13) // Replace with your GPIO pin number
 			if pin == nil {
-				log.Fatalf("Failed to find GPIO pin %d", yourGPIOPinNumber)
+				logWithTimestamp("Failed to find GPIO pin 13")
 			}
 			
 			if laser.Status {
 				    // Set the pin as output (for example)
 				    if err := pin.Out(gpio.High); err != nil {
-				        log.Fatal(err)
+				        logWithTimestamp(err)
 				    }
 			} else {
 				    // Set the pin as output (for example)
 				    if err := pin.Out(gpio.Low); err != nil {
-				        log.Fatal(err)
+				        logWithTimestamp(err)
 				    }
 			}
 		}
