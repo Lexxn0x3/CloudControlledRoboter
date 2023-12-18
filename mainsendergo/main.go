@@ -175,15 +175,23 @@ func handleIncomingJson() {
 				logWithTimestamp("Error initializing periph host:", err)
 				return
 			}
+
+			    // Access a GPIO pin
+			pin := gpio.ByNumber(13) // Replace with your GPIO pin number
+			if pin == nil {
+				log.Fatalf("Failed to find GPIO pin %d", yourGPIOPinNumber)
+			}
 			
 			if laser.Status {
-				if err := bcm283x.GPIO13.Out(gpio.High); err != nil {
-					logWithTimestamp("Error setting GPIO13 high:", err)
-				}
+				    // Set the pin as output (for example)
+				    if err := pin.Out(gpio.High); err != nil {
+				        log.Fatal(err)
+				    }
 			} else {
-				if err := bcm283x.GPIO13.Out(gpio.Low); err != nil {
-					logWithTimestamp("Error setting GPIO13 high:", err)
-				}
+				    // Set the pin as output (for example)
+				    if err := pin.Out(gpio.Low); err != nil {
+				        log.Fatal(err)
+				    }
 			}
 		}
 	}
