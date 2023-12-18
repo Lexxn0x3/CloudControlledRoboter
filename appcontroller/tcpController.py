@@ -11,10 +11,10 @@ class TCPController:
         self.robot_port = robot_port    # Store the port number for TCP communication
         self.robot_socket = None        # Initialize the robot_socket as None initially
         self.auto_reconnect = True      # Flag to enable automatic reconnection in case of connection issues
-        self.connect()              # Establish the initial connection to the robot
-
         self.bot = bot_instance         # Reference to the main Bot instance
         self.bp = BetterPrinting(self.bot.i_print , self.bot.d_print, self.bot.e_print) # Setup Better Printing
+
+        self.connect()              # Establish the initial connection to the robot
 
     #Establishes a connection to the robot.
     def connect(self):
