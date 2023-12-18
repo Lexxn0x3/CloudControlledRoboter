@@ -61,11 +61,6 @@ var laserChannel = make(chan string)
 var gpioPinOut gpio.PinIO
 
 func main() {
-	if _, err := host.Init(); err != nil {
-		logWithTimestamp("Error initializing periph host:", err)
-		return
-	}
-
 	listenPort := flag.String("port", "6969", "port to listen on")
 	flag.Parse()
 
@@ -176,6 +171,11 @@ func handleIncomingJson() {
 				continue
 			}
 
+			if _, err := host.Init(); err != nil {
+				logWithTimestamp("Error initializing periph host:", err)
+				return
+			}
+			
 			if laser.Status {
 				if err := bcm283x.GPIO13.Out(gpio.High); err != nil {
 					logWithTimestamp("Error setting GPIO13 high:", err)
