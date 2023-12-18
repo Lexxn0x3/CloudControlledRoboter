@@ -70,21 +70,28 @@ func main() {
 	}
 
 	targetPort := strings.TrimSpace(*targetPortPointer)
+	connected := false
+	var currentConnection *net.TCPConn
+	for !connected {
+		// Connect to the server
+		currentConnection, err := connectToServer(targetIP, targetPort)
+		if err != nil {
+			logWithTimestamp("Error connecting to server:", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
 
-	// Connect to the server
-	currentConnection, err := connectToServer(targetIP, targetPort)
-	if err != nil {
-		logWithTimestamp("Error connecting to server:", err)
-		return
+		logWithTimestamp("Connected to", targetIP+":"+targetPort)
+
+		_, err = currentConnection.Write([]byte("startstreams " + portStr + "\n"))
+		if err != nil {
+			logWithTimestamp("Error sending startstreams command:", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		connected = true
 	}
 	defer currentConnection.Close()
-	logWithTimestamp("Connected to", targetIP+":"+targetPort)
-
-	_, err = currentConnection.Write([]byte("startstreams " + portStr + "\n"))
-	if err != nil {
-		logWithTimestamp("Error sending startstreams command:", err)
-		return
-	}
 
 	targetConnection = currentConnection
 	// Start a new TCP server to handle JSON objects
