@@ -177,7 +177,7 @@ func handleIncomingJson() {
 			}
 
 			    // Access a GPIO pin
-			pin := gpioreg.ByName(13) // Replace with your GPIO pin number
+			pin := gpioreg.ByName("13") // Replace with your GPIO pin number
 			if pin == nil {
 				logWithTimestamp("Failed to find GPIO pin 13")
 			}
