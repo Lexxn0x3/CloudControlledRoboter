@@ -329,7 +329,7 @@ func handleConnection(conn net.Conn) {
 				rosmaster.SetBeep(100)
 				rosmaster.SetColorfulLamps(0xFF, 0, 0, 0)
 				rosmaster.SetColorfulEffect(0, 255, 255)
-				rosmaster.SetColorfulEffect(6, 255, 255)
+				//rosmaster.SetColorfulEffect(6, 255, 255)
 
 				go streamhandlers.HandleCameraStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), port, cameraDoneChan, &wg)
 				go streamhandlers.HandleLidarStream(conn.RemoteAddr().(*net.TCPAddr).IP.String(), lidarPortStr, lidarDoneChan, &wg)
