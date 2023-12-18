@@ -171,17 +171,21 @@ func handleIncomingJson() {
 				continue
 			}
 
+			logWithTimestamp("Received laser")
 			if _, err := host.Init(); err != nil {
 				logWithTimestamp("Error initializing periph host:", err)
 				return
 			}
 
+			logWithTimestamp("Host Init")
 			    // Access a GPIO pin
 			pin := gpioreg.ByName("13") // Replace with your GPIO pin number
 			if pin == nil {
 				logWithTimestamp("Failed to find GPIO pin 13")
 			}
 			
+
+			logWithTimestamp("Gpioreg Init")
 			if laser.Status {
 				    // Set the pin as output (for example)
 				    if err := pin.Out(gpio.High); err != nil {
@@ -193,6 +197,7 @@ func handleIncomingJson() {
 				        logWithTimestamp(err)
 				    }
 			}
+			logWithTimestamp("STATUS SET")
 		}
 	}
 }
