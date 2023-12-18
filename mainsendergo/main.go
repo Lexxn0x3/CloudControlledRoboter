@@ -179,7 +179,7 @@ func handleIncomingJson() {
 
 			logWithTimestamp("Host Init")
 			    // Access a GPIO pin
-			pin := gpioreg.ByName("13") // Replace with your GPIO pin number
+			pin := gpioreg.ByName("33") // Replace with your GPIO pin number
 			if pin == nil {
 				logWithTimestamp("Failed to find GPIO pin 13")
 			}
