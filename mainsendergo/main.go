@@ -183,7 +183,8 @@ func handleIncomingJson() {
 			if pin == nil {
 				logWithTimestamp("Failed to find GPIO pin 13")
 			}
-			
+
+			logWithTimestamp("Pin is: ", pin.Read())
 
 			logWithTimestamp("Gpioreg Init")
 			if laser.Status {
@@ -197,6 +198,7 @@ func handleIncomingJson() {
 				        logWithTimestamp(err)
 				    }
 			}
+			logWithTimestamp("Pin is: ", pin.Read())
 			logWithTimestamp("STATUS SET")
 		}
 	}
