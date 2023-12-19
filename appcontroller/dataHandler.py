@@ -1,5 +1,5 @@
 from betterPrinting import BetterPrinting
-from appcontroller.lidarDistance.LidarDistanceMain import LidarDistanceSystem
+from lidarDistance.LidarDistanceMain import LidarDistanceSystem
 
 
 # Class responsible for processing incoming data and translating it into robot control commands.

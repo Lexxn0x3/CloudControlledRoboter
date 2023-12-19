@@ -1,11 +1,11 @@
 import sys
 import signal
-from LidarDataThread import LidarDataThread
-from DistanceSenderThread import DistanceSenderThread
-from WebsocketThread import WebSocketClientThread
-from utils import pregenerate_lidar_data, signal_handler
-from globals import stop_threads, maxLenBuffer
-from SpeedDataThread import SpeedThread
+from lidarDistance.LidarDataThread import LidarDataThread
+from lidarDistance.DistanceSenderThread import DistanceSenderThread
+from lidarDistance.WebsocketThread import WebSocketClientThread
+from lidarDistance.utils import pregenerate_lidar_data, signal_handler
+from lidarDistance.globals import stop_threads, maxLenBuffer
+from lidarDistance.SpeedDataThread import SpeedThread
 
 
 class LidarDistanceSystem:
@@ -31,7 +31,7 @@ class LidarDistanceSystem:
         
         # Set up signal handler for Ctrl+C
         signal.signal(signal.SIGINT, signal_handler)
-
+        print("everything startet")
         self.start_processing()
 
     def start_processing(self):

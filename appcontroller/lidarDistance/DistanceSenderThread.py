@@ -2,8 +2,8 @@ import threading
 import time
 import socket
 import json
-from utils import connect_to_server
-from globals import stop_front, stop_front_left, stop_front_right, stop_left, stop_right, stop_threads, minDist, stop_back
+from lidarDistance.utils import connect_to_server
+from lidarDistance.globals import stop_front, stop_front_left, stop_front_right, stop_left, stop_right, stop_threads, minDist, stop_back
 
 # DistanceSenderThread class to handle the connection back to the broker and analyze and provide a stream of distance data
 class DistanceSenderThread(threading.Thread):
