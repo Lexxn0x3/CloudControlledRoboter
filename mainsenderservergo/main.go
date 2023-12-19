@@ -71,7 +71,6 @@ func main() {
 
 	targetPort := strings.TrimSpace(*targetPortPointer)
 	connected := false
-	var currentConnection *net.TCPConn
 	for !connected {
 		// Connect to the server
 		currentConnection, err := connectToServer(targetIP, targetPort)
@@ -90,10 +89,10 @@ func main() {
 			continue
 		}
 		connected = true
+		defer currentConnection.Close()
+		targetConnection = currentConnection
 	}
-	defer currentConnection.Close()
 
-	targetConnection = currentConnection
 	// Start a new TCP server to handle JSON objects
 	listenPort := strings.TrimSpace(*listenPortPointer)
 	go startJSONServer(listenPort)
