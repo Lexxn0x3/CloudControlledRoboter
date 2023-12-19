@@ -288,8 +288,6 @@ func handleConnection(conn net.Conn) {
 				}
 				scanner = bufio.NewScanner(conn)
 			}
-
-			time.Sleep(10 * time.Millisecond)
 		}
 		close(doneReadingChan)
 	}()
