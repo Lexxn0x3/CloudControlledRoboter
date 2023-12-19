@@ -2,8 +2,8 @@ import threading
 import time
 import socket
 import json
-from utils import connect_to_server
-from globals import stop_threads
+from lidarDistance.utils import connect_to_server
+from lidarDistance.globals import stop_threads
 
 # LidarDataThread class to handle the connection to the LidarTCPPort and update the lidarDataBuffer
 class LidarDataThread(threading.Thread):

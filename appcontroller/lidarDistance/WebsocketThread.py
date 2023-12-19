@@ -3,7 +3,7 @@ import time
 import websockets
 import asyncio
 import json
-from globals import stop_front, stop_left, stop_right, stop_front_right, stop_front_left, stop_threads, stop_back
+from lidarDistance.globals import stop_front, stop_left, stop_right, stop_front_right, stop_front_left, stop_threads, stop_back
 
 class WebSocketClientThread(threading.Thread):
     def __init__(self, ip_address, app_handler_port):
