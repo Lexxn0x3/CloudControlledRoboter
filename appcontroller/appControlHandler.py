@@ -5,6 +5,7 @@ from dataHandler import DataHandler
 from tcpController import TCPController
 from websocketController import WebSocketController
 from lidarDistance.LidarDistanceMain import LidarDistanceSystem
+from detect.detectObject import RobotController
 
 
 # The main controller class for the robot.
@@ -254,14 +255,12 @@ class Bot():
     
     def send_detection_data(self, onDetection):
         try:
-            detect_data = {
-                "detect": onDetection
-            }
-            
-            json_data_str = json.dumps(detect_data)
-            
-            self.tcpc.send_json_data(json_data_str)
-            
+            if onDetection:
+                self.robot_controller = RobotController()
+                self.robot_controller.run()
+            else:
+                self.robot_controller = None
+                
         except Exception as e:
             self.pb.error_print(f"Error starting object detection: {e}")
     
