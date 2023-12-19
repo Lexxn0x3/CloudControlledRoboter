@@ -11,6 +11,7 @@ class DataHandler():
     stopRight = False        # Flag to stop if there is an obstacle on the right
     stopFrontRight = False   # Flag to stop if there is an obstacle in the front-right
     stopFrontLeft = False    # Flag to stop if there is an obstacle in the front-left
+    stopBack = False
         
     def __init__(self, bot_instance):
         self.bot = bot_instance
@@ -41,8 +42,9 @@ class DataHandler():
         self.stopRight = data.get("stop_right", False)
         self.stopFrontLeft = data.get("stop_front_left", False)
         self.stopFrontRight = data.get("stop_front_right", False)
+        self.stopBack = data.get("stop_back", False)
 
-        if any([self.stopFront, self.stopFrontLeft, self.stopFrontRight, self.stopLeft, self.stopRight]) == True:
+        if any([self.stopFront, self.stopFrontLeft, self.stopFrontRight, self.stopLeft, self.stopRight, self.stopBack]) == True:
             self.bot.stop()
 
 
