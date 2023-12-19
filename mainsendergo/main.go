@@ -61,6 +61,11 @@ var laserChannel = make(chan string)
 var gpioPinOut gpio.PinIO
 
 func main() {
+	if _, err := host.Init(); err != nil {
+		logWithTimestamp("Error initializing periph host:", err)
+		return
+	}
+
 	listenPort := flag.String("port", "6969", "port to listen on")
 	flag.Parse()
 
@@ -170,36 +175,23 @@ func handleIncomingJson() {
 				logWithTimestamp("Error decoding JSON:", err)
 				continue
 			}
-
-			logWithTimestamp("Received laser")
-			if _, err := host.Init(); err != nil {
-				logWithTimestamp("Error initializing periph host:", err)
+			// Access a GPIO pin
+			pin := gpioreg.ByName("GPIO14") // EXCUSE ME? GPIO14=GPIO13 https://jetsonhacks.com/nvidia-jetson-nano-j41-header-pinout/ <- Sysfs GPIO is this pin number with Pin being the pin on the board
+			if pin == nil {
 				return
 			}
 
-			logWithTimestamp("Host Init")
-			    // Access a GPIO pin
-			pin := gpioreg.ByName("33") // Replace with your GPIO pin number
-			if pin == nil {
-				logWithTimestamp("Failed to find GPIO pin 13")
-			}
-
-			logWithTimestamp("Pin is: ", pin.Read())
-
-			logWithTimestamp("Gpioreg Init")
 			if laser.Status {
-				    // Set the pin as output (for example)
-				    if err := pin.Out(gpio.High); err != nil {
-				        logWithTimestamp(err)
-				    }
+				// Set the pin as output (for example)
+				if err := pin.Out(gpio.High); err != nil {
+					logWithTimestamp(err)
+				}
 			} else {
-				    // Set the pin as output (for example)
-				    if err := pin.Out(gpio.Low); err != nil {
-				        logWithTimestamp(err)
-				    }
+				// Set the pin as output (for example)
+				if err := pin.Out(gpio.Low); err != nil {
+					logWithTimestamp(err)
+				}
 			}
-			logWithTimestamp("Pin is: ", pin.Read())
-			logWithTimestamp("STATUS SET")
 		}
 	}
 }
