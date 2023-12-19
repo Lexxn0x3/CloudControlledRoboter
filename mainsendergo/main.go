@@ -206,7 +206,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 	lastHealthCheckActive := healthCheckActive
 
 	var lastTimestamp int64
-	timer := time.NewTimer(150 * time.Millisecond)
+	timer := time.NewTimer(200 * time.Millisecond)
 	logWithTimestamp("Health check routine started")
 
 	for {
@@ -242,7 +242,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 				lastTimestamp = timestamp
 				//logWithTimestamp("Health check passed")
 				rosmaster.BlockedHealthcheck = false
-				timer.Reset(150 * time.Millisecond)
+				timer.Reset(200 * time.Millisecond)
 			}
 		case <-stopChan:
 			logWithTimestamp("Health check routine stopped")
