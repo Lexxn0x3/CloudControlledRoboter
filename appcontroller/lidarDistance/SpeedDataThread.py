@@ -2,18 +2,18 @@ import threading
 import time
 import json
 from lidarDistance.utils import connect_to_server
-from lidarDistance.globals import stop_threads, speed
 
 class SpeedThread(threading.Thread):
-    def __init__(self, ip_address, speed_server_port):
+    def __init__(self, globals, ip_address, speed_server_port):
         super(SpeedThread, self).__init__()
         self.ip_address = ip_address
         self.speed_server_port = speed_server_port
+        self.globals = globals
+
     def run(self):
-        global stop_threads, speed
         try:
             speed_sock = connect_to_server(self.ip_address, self.speed_server_port)
-            while not stop_threads:
+            while not self.globals.stop_threads:
                 data = speed_sock.recv(1024)
             if data:
                 # Split the received data by newline and process each line as a separate JSON object
@@ -21,7 +21,7 @@ class SpeedThread(threading.Thread):
                     try:
                         # Decode the JSON data and extract the distance and angle
                         data = json.loads(line.decode('utf-8'))
-                        speed = data['Speed']
+                        self.globals.speed = data['Speed']
                         time.sleep(1)
                             
                     except json.JSONDecodeError:

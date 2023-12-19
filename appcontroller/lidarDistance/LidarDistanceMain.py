@@ -3,12 +3,16 @@ from lidarDistance.LidarDataThread import LidarDataThread
 from lidarDistance.DistanceSenderThread import DistanceSenderThread
 from lidarDistance.WebsocketThread import WebSocketClientThread
 from lidarDistance.utils import pregenerate_lidar_data
-from lidarDistance.globals import stop_threads, maxLenBuffer
+from lidarDistance.globals import LidarGlobals
 from lidarDistance.SpeedDataThread import SpeedThread
 
 
 class LidarDistanceSystem:
     def __init__(self, lidarstreamIP="192.168.8.20", lidarstreamPort=9011, appHandlerIP="192.168.8.20", appHandlerPort=6942, distanceSenderIP="192.168.8.20", distanceSenderPort=3031):
+        
+        # Create a instance LidarGlobals for global variables across LidarDistanceSystem
+        self.globals = LidarGlobals()
+        
         self.lidarstreamIP = lidarstreamIP
         self.lidarstreamPort = lidarstreamPort
         self.appHandlerIP = appHandlerIP
@@ -17,16 +21,16 @@ class LidarDistanceSystem:
         self.distanceSenderPort = distanceSenderPort
 
         # Create a LidarDataThread instance
-        self.lidar_data_buffer = pregenerate_lidar_data(maxLenBuffer)
-        self.lidar_data_thread = LidarDataThread(self.lidarstreamIP, self.lidarstreamPort, self.lidar_data_buffer)
+        self.lidar_data_buffer = pregenerate_lidar_data(self.globals.maxLenBuffer)
+        self.lidar_data_thread = LidarDataThread(self.globals,self.lidarstreamIP, self.lidarstreamPort, self.lidar_data_buffer)
         
         # Create a DistanceSenderThread instance if distanceSenderIP and distanceSenderPort are provided
         self.sender_thread = None
         if self.distanceSenderIP is not None and self.distanceSenderPort is not None:
-            self.sender_thread = DistanceSenderThread(self.distanceSenderIP, self.distanceSenderPort, self.lidar_data_buffer)
+            self.sender_thread = DistanceSenderThread(self.globals,self.distanceSenderIP, self.distanceSenderPort, self.lidar_data_buffer)
         
         # Create a WebSocket client thread
-        self.websocket_client_thread = WebSocketClientThread(self.appHandlerIP, self.appHandlerPort)
+        self.websocket_client_thread = WebSocketClientThread(self.globals,self.appHandlerIP, self.appHandlerPort)
         
         print("everything startet")
         self.start_processing()
@@ -43,7 +47,7 @@ class LidarDistanceSystem:
         self.websocket_client_thread.start()
 
         try:
-            while not stop_threads:
+            while not self.globals.stop_threads:
                 # You can add any other code you want to run continuously here
                 pass
         except KeyboardInterrupt:

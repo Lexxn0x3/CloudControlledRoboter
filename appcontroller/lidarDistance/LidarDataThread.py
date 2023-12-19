@@ -3,19 +3,18 @@ import time
 import socket
 import json
 from lidarDistance.utils import connect_to_server
-from lidarDistance.globals import stop_threads
 
 # LidarDataThread class to handle the connection to the LidarTCPPort and update the lidarDataBuffer
 class LidarDataThread(threading.Thread):
-    def __init__(self, ip_address, server_port, lidar_data_buffer):
+    def __init__(self, globals, ip_address, server_port, lidar_data_buffer):
         super(LidarDataThread, self).__init__()
         self.ip_address = ip_address
         self.server_port = server_port
         self.lidar_data = lidar_data_buffer
+        self.globals = globals
 
     def run(self):
-        global stop_threads
-        while not stop_threads:
+        while not self.globals.stop_threads:
             try:
                 sock = connect_to_server(self.ip_address, self.server_port)
                 self.receive_lidar_data(sock, self.lidar_data)

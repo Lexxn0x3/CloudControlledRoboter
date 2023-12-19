@@ -3,19 +3,18 @@ import time
 import socket
 import json
 from lidarDistance.utils import connect_to_server
-from lidarDistance.globals import stop_front, stop_front_left, stop_front_right, stop_left, stop_right, stop_threads, minDist, stop_back
 
 # DistanceSenderThread class to handle the connection back to the broker and analyze and provide a stream of distance data
 class DistanceSenderThread(threading.Thread):
-    def __init__(self, ip_address, server_port, lidar_data_buffer):
+    def __init__(self, globals, ip_address, server_port, lidar_data_buffer):
         super(DistanceSenderThread, self).__init__()
         self.lidar_data_buffer = lidar_data_buffer
         self.ip_address = ip_address
         self.server_port = server_port
+        self.globals = globals
     
     def run(self):
-        global stop_threads
-        while not stop_threads:
+        while not self.globals.stop_threads:
             sender_sock = None
             try:
                 sender_sock = connect_to_server(self.ip_address, self.server_port)
@@ -54,9 +53,7 @@ class DistanceSenderThread(threading.Thread):
     
     #Function to check distance of LidarData
     def check_Distance(self, lidar_data):
-    
-        global stop_front, stop_left, stop_right, stop_front_left, stop_front_right, minDist, stop_back
-        
+            
         # Initialize variables outside the function if they are not already initialized
         left_D = left_D if 'left_D' in locals() else None
         front_D = front_D if 'front_D' in locals() else None
@@ -69,47 +66,47 @@ class DistanceSenderThread(threading.Thread):
             
             #check_front
             if 350 <= angle <= 360 or 0 <= angle <= 10:
-                if distance <= minDist:
-                    stop_front = True
+                if distance <= self.globals.minDist:
+                    self.globals.stop_front = True
                 else:
-                    stop_front = False
+                    self.globals.stop_front = False
                 front_D = distance
             #check_left
             if 260 <= angle <= 280:
-                if distance <= minDist:
-                    stop_left = True
+                if distance <= self.globals.minDist:
+                    self.globals.stop_left = True
                 else:
-                    stop_left = False
+                    self.globals.stop_left = False
                 left_D = distance
             #check_right
             if 80 <= angle <= 100:
-                if distance <= minDist:
-                    stop_right = True
+                if distance <= self.globals.minDist:
+                    self.globals.stop_right = True
                 else:
-                    stop_right = False
+                    self.globals.stop_right = False
                 right_D = distance
             #check_front_left
             if 305 <= angle <= 325:
-                if distance <= minDist:
-                    stop_front_left = True
+                if distance <= self.globals.minDist:
+                    self.globals.stop_front_left = True
                 else:
-                    stop_front_left = False
+                    self.globals.stop_front_left = False
                 front_left_D = distance
             
             #check_front_right
             if 35 <= angle <= 55:
-                if distance <= minDist:
-                    stop_front_right = True
+                if distance <= self.globals.minDist:
+                    self.globals.stop_front_right = True
                 else:
-                    stop_front_right = False
+                    self.globals.stop_front_right = False
                 front_right_D = distance
 
             #check_back
             if 160 <= angle <= 200:
-                if distance <= minDist:
-                    stop_back = True
+                if distance <= self.globals.minDist:
+                    self.globals.stop_back = True
                 else:
-                    stop_back = False
+                    self.globals.stop_back = False
                 back_D = distance
                     
         

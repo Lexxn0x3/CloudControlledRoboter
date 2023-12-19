@@ -1,10 +1,12 @@
-stop_front = False
-stop_right = False
-stop_left = False
-stop_front_right = False
-stop_front_left = False
-stop_back = False
-stop_threads = False
-minDist = 400
-maxLenBuffer= 150
-speed = 50
+class LidarGlobals:
+    def __init__(self):
+        self.stop_front = False
+        self.stop_right = False
+        self.stop_left = False
+        self.stop_front_right = False
+        self.stop_front_left = False
+        self.stop_back = False
+        self.stop_threads = False
+        self.minDist = 400
+        self.maxLenBuffer = 150
+        self.speed = 50
