@@ -1,4 +1,5 @@
 from betterPrinting import BetterPrinting
+#from LidarDistanceMain import LidarDistanceSystem
 
 
 # Class responsible for processing incoming data and translating it into robot control commands.
@@ -19,6 +20,19 @@ class DataHandler():
     #################
     # calc keyInput #
     #################
+    
+    #Process break assistant
+    async def handle_brake_assistant(self, data):
+        #LDC = LidarDistanceSystem()
+        #initialize break assistant
+        return
+    
+    
+    #Process detection system
+    async def handle_brake_assistant(self, data):
+        #initialize break assistant
+        return
+    
     
     # Processes incoming stop flag data and stops the robot if any stop condition is met.
     async def handle_stopFlag_data(self, data):

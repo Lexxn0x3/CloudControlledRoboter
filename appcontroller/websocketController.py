@@ -32,6 +32,12 @@ class WebSocketController:
                         await self.dh.handle_buzzer_data(data)
                     elif data_type == "lightbar":
                         await self.dh.handle_lightbar_data(data)
+                    elif data_type == "laser":
+                        await self.dh.handle_laser_data(data)
+                    elif data_type == "autonom":
+                        await self.dh.handle_autonomous_driving(data)
+                    elif data_type == "brakeassist":
+                        await self.dh.handle_brake_assistant(data)
                     else:
                         self.bp.error_print(f"Unknown data type: {data_type}")
                     
