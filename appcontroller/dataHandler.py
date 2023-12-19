@@ -1,6 +1,7 @@
 from threading import Thread
 from betterPrinting import BetterPrinting
 from lidarDistance.LidarDistanceMain import LidarDistanceSystem
+from detect.detectObject import RobotController
 
 
 # Class responsible for processing incoming data and translating it into robot control commands.
@@ -34,8 +35,13 @@ class DataHandler():
     
     #Process detection system
     async def handle_detection_system(self, data):
-        #initialize break assistant
-        return
+        state = data.get("detect", False)
+        if state:
+                self.robot_controller = RobotController()
+                self.robot_controller.run()
+        else:
+            self.robot_controller = None
+        
     
     
     # Processes incoming stop flag data and stops the robot if any stop condition is met.

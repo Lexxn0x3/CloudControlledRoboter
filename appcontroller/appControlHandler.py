@@ -5,7 +5,7 @@ from dataHandler import DataHandler
 from tcpController import TCPController
 from websocketController import WebSocketController
 from lidarDistance.LidarDistanceMain import LidarDistanceSystem
-from detect.detectObject import RobotController
+
 
 
 # The main controller class for the robot.
@@ -248,21 +248,7 @@ class Bot():
         except Exception as e:
             self.pb.error_print(f"Error sending laser data to the robot: {e}")
             
-    
-    #################
-    #   detection   #
-    #################
-    
-    def send_detection_data(self, onDetection):
-        try:
-            if onDetection:
-                self.robot_controller = RobotController()
-                self.robot_controller.run()
-            else:
-                self.robot_controller = None
-                
-        except Exception as e:
-            self.pb.error_print(f"Error starting object detection: {e}")
+
     
     
 
