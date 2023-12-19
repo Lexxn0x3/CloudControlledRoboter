@@ -3,6 +3,7 @@ import sys
 from dataHandler import DataHandler
 from tcpController import TCPController
 from websocketController import WebSocketController
+from appcontroller.lidarDistance.LidarDistanceMain import LidarDistanceSystem
 
 
 # The main controller class for the robot.
@@ -19,6 +20,7 @@ class Bot():
         self.startTCPConection(tcp_ip, tcp_port)
         self.startDataHandler()
         self.startWebsocket(web_ip, web_port)
+        self.LDC = LidarDistanceSystem()
         
         print('------------------------------\nAppControlHandler ready\n------------------------------\n')
    
