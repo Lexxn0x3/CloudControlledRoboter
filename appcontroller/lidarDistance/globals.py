@@ -7,3 +7,4 @@ stop_back = False
 stop_threads = False
 minDist = 400
 maxLenBuffer= 150
+speed = 50

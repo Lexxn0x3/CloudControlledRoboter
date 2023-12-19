@@ -2,6 +2,7 @@ import threading
 import time
 import json
 from lidarDistance.utils import connect_to_server
+from lidarDistance.globals import stop_threads, speed
 
 class SpeedThread(threading.Thread):
     def __init__(self, ip_address, speed_server_port):

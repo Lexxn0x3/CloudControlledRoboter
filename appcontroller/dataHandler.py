@@ -1,3 +1,4 @@
+from threading import Thread
 from betterPrinting import BetterPrinting
 from lidarDistance.LidarDistanceMain import LidarDistanceSystem
 
@@ -13,9 +14,9 @@ class DataHandler():
     stopFrontLeft = False    # Flag to stop if there is an obstacle in the front-left
     stopBack = False
         
-    def __init__(self, bot_instance):
+    def __init__(self, bot_instance, lidar_thread):
         self.bot = bot_instance
-
+        self.lidar_thread = lidar_thread
         self.bp = BetterPrinting(self.bot.i_print , self.bot.d_print, self.bot.e_print)
 
     #################
@@ -26,10 +27,10 @@ class DataHandler():
     async def handle_brake_assistant(self, data):
         state = data.get("state", False)
         if not state:
-            self.LDC = None
+            self.bot.stopLidarDistanceSystem()  # Stop LidarDistanceSystem gracefully
         else:
-            self.LDC = LidarDistanceSystem()
-    
+            if self.lidar_thread is not None and not self.lidar_thread.is_alive():
+                self.bot.startLidarDistanceSystem(self.bot.web_ip, self.bot.web_port)  # Start LidarDistanceSystem    
     
     #Process detection system
     async def handle_detection_system(self, data):

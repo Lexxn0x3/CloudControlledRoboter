@@ -1,6 +1,5 @@
 import socket
 from collections import deque
-import sys
 
 # Function to create a socket to connect to server
 def connect_to_server(ip_address, server_port):
@@ -17,7 +16,3 @@ def connect_to_server(ip_address, server_port):
 def pregenerate_lidar_data(maxlen):
     lidar_data_buffer = deque(maxlen=maxlen)
     return lidar_data_buffer
-
-def signal_handler(sig, frame):
-    print("Ctrl+C detected. Exiting...")
-    sys.exit(0)

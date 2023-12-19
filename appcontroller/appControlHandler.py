@@ -1,5 +1,6 @@
 import json
 import sys
+from threading import Thread
 from dataHandler import DataHandler
 from tcpController import TCPController
 from websocketController import WebSocketController
@@ -17,6 +18,7 @@ class Bot():
         self.i_print = info_print   #Flag to enable/disable informational print statements.
         self.d_print = debug_print  #Flag to enable/disable debugging print statements.
         self.e_print = error_print  #Flag to enable/disable error print statements.
+        self.startLidarDistanceSystem(web_ip, web_port)  # Start LidarDistanceSystem in a separate thread
         self.startTCPConection(tcp_ip, tcp_port)
         self.startDataHandler()
         self.startWebsocket(web_ip, web_port)
@@ -39,7 +41,7 @@ class Bot():
 
     def startDataHandler(self):
         print("starting Datahandler...")
-        self.dh = DataHandler(self)
+        self.dh = DataHandler(self, self.lidar_thread)
     
     
     ###################
@@ -49,9 +51,30 @@ class Bot():
     def startWebsocket(self, web_ip, web_port):
         print("starting Websocket Connection...")
         self.websocket_controller = WebSocketController(web_ip, web_port, datahandler=self.dh, bot_instance=self)
-        self.LDC = LidarDistanceSystem("192.168.8.20", 9011, web_ip, web_port, "192.168.8.20", 3031)
         self.websocket_controller.start()
 
+    ##########################
+    #  LidarDistance Thread  #
+    ##########################
+        
+    def startLidarDistanceSystem(self, web_ip, web_port):
+        # Start LidarDistanceSystem in a separate thread
+        self.lidar_thread = Thread(target=self.start_lidar_distance_system, args=(web_ip, web_port))
+        self.lidar_thread.start()
+
+    
+    def start_lidar_distance_system(self, web_ip, web_port):
+        self.LDC = LidarDistanceSystem("192.168.8.20", 9011, web_ip, web_port, "192.168.8.20", 3031)
+    
+
+    def stopLidarDistanceSystem(self):
+        if self.lidar_thread is not None and self.lidar_thread.is_alive():
+            self.LDC.stop_threads = True  # Set the stop_threads flag to True
+            self.lidar_thread.join(timeout=2)  # Wait for LidarDistanceThread to finish for up to 2 seconds
+            if self.lidar_thread.is_alive():
+                # If the thread is still alive after the timeout, consider terminating it forcefully
+                self.lidar_thread._stop()  # Note: Using _stop is generally not recommended, but it forcefully terminates the thread
+        
 
     #################
     #     stop      #

@@ -1,9 +1,8 @@
 import sys
-import signal
 from lidarDistance.LidarDataThread import LidarDataThread
 from lidarDistance.DistanceSenderThread import DistanceSenderThread
 from lidarDistance.WebsocketThread import WebSocketClientThread
-from lidarDistance.utils import pregenerate_lidar_data, signal_handler
+from lidarDistance.utils import pregenerate_lidar_data
 from lidarDistance.globals import stop_threads, maxLenBuffer
 from lidarDistance.SpeedDataThread import SpeedThread
 
@@ -29,8 +28,6 @@ class LidarDistanceSystem:
         # Create a WebSocket client thread
         self.websocket_client_thread = WebSocketClientThread(self.appHandlerIP, self.appHandlerPort)
         
-        # Set up signal handler for Ctrl+C
-        signal.signal(signal.SIGINT, signal_handler)
         print("everything startet")
         self.start_processing()
 
