@@ -38,6 +38,8 @@ class WebSocketController:
                         await self.dh.handle_autonomous_driving(data)
                     elif data_type == "brakeassist":
                         await self.dh.handle_brake_assistant(data)
+                    elif data_type == "detection":
+                        await self.dh.handle_detection_system(data)
                     else:
                         self.bp.error_print(f"Unknown data type: {data_type}")
                     
