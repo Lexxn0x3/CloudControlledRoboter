@@ -26,42 +26,37 @@ pub fn start_websocket(broker_ip: &str, broker_port: u16, buffer_size: usize, we
         // Construct the connection string using the IP and port
         let tcp_address = format!("{}:{}", broker_ip, broker_port);
 
-        loop {
-            match TcpStream::connect(&tcp_address) {
-                Ok(stream) => {
-                    stream.set_nodelay(true).expect("set_nodelay call failed");
-                    debug!("Connected to TCP server at {}", tcp_address);
-                    let mut reader = BufReader::new(stream);
-                    // Initialize the buffer with the configurable size
-                    let mut buffer = vec![0; buffer_size];
-                    loop {
-                        match reader.read(&mut buffer) {
-                            Ok(size) => {
-                                if size == 0 {
-                                    debug!("End of TCP stream");
-                                    break;
-                                }
-                                let mut state = state.lock().unwrap();
-                                state.clear();
-                                state.extend_from_slice(&buffer[..size]);
-                                debug!("Received {} bytes from TCP stream", size);
-                                // Send the data to all connected WebSocket clients
-                                broadcast_to_clients(&state, &clients_for_tcp_thread);
-                            }
-                            Err(e) => {
-                                error!("Error reading from TCP stream: {}", e);
+        match TcpStream::connect(&tcp_address) {
+            Ok(stream) => {
+                stream.set_nodelay(true).expect("set_nodelay call failed");
+                debug!("Connected to TCP server at {}", tcp_address);
+                let mut reader = BufReader::new(stream);
+                // Initialize the buffer with the configurable size
+                let mut buffer = vec![0; buffer_size];
+                loop {
+                    match reader.read(&mut buffer) {
+                        Ok(size) => {
+                            if size == 0 {
+                                debug!("End of TCP stream");
                                 break;
                             }
+                            let mut state = state.lock().unwrap();
+                            state.clear();
+                            state.extend_from_slice(&buffer[..size]);
+                            debug!("Received {} bytes from TCP stream", size);
+                            // Send the data to all connected WebSocket clients
+                            broadcast_to_clients(&state, &clients_for_tcp_thread);
+                        }
+                        Err(e) => {
+                            error!("Error reading from TCP stream: {}", e);
+                            break;
                         }
                     }
                 }
-                Err(e) => {
-                    error!("Failed to connect to TCP server at {}: {}", tcp_address, e);
-                }
             }
-            info!("reconnecting to tcp broker for websocket");
-            // Wait for a short duration before attempting to reconnect
-            thread::sleep(std::time::Duration::from_millis(50));
+            Err(e) => {
+                error!("Failed to connect to TCP server at {}: {}", tcp_address, e);
+            }
         }
     });
 
