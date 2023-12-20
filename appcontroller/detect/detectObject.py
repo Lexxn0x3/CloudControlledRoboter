@@ -7,6 +7,7 @@ class RobotController:
         self.bot = bot_instance 
         self.model = YOLO(model_path)
         self.address = f'tcp://{ip_address}:{port}'
+        
 
     def calculate_midpoint(self, points):
         points = points.squeeze()
@@ -77,7 +78,7 @@ class RobotController:
                 self.adjust_robot_position(object_midpoint, target_position, tolerance)
 
     def run(self):
-        results = self.model.predict(self.address, show=True, classes=[0], conf=0.6, stream=True, save=False, show=False, save_txt=False)
+        results = self.model.predict(self.address, classes=[0], conf=0.6, stream=True, save=False, show=False, save_txt=False)
         self.process_results(results)
 
 
