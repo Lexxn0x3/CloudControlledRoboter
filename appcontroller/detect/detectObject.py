@@ -3,7 +3,7 @@ import time
 
 
 class RobotController:
-    def __init__(self, bot_instance ,model_path='werner.pt', ip_address='127.0.0.1', port=9001):
+    def __init__(self, bot_instance ,model_path='./werner.pt', ip_address='127.0.0.1', port=9001):
         self.bot = bot_instance 
         self.model = YOLO(model_path)
         self.address = f'tcp://{ip_address}:{port}'
