@@ -31,10 +31,10 @@ class RobotController:
         if object_x < abs(target_x - tolerance_x)  or object_x > abs(target_x + tolerance_x):
             final_x = False  # Reset final_x if the x-coordinate is outside tolerance
             if object_x < (target_x - tolerance_x):
-                self.bot.spin_left(25)
+                self.bot.spin_left(30)
                 print("spin left")
             else:
-                self.bot.spin_right(25)
+                self.bot.spin_right(30)
                 print("spin right")
         
         if object_y >= abs(target_y - tolerance_y)  and object_y <= abs(target_y + tolerance_y) and final_x and not final_y:
