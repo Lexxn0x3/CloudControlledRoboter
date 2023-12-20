@@ -8,7 +8,7 @@ from lidarDistance.SpeedDataThread import SpeedThread
 
 
 class LidarDistanceSystem:
-    def __init__(self, lidarstreamIP="192.168.8.20", lidarstreamPort=9011, appHandlerIP="127.0.0.1", appHandlerPort=6942, distanceSenderIP="192.168.8.20", distanceSenderPort=3031):
+    def __init__(self, lidarstreamIP="192.168.8.20", lidarstreamPort=9011, appHandlerIP="192.168.8.20", appHandlerPort=6942, distanceSenderIP="192.168.8.20", distanceSenderPort=3031):
         
         # Create a instance LidarGlobals for global variables across LidarDistanceSystem
         self.globals = LidarGlobals()
