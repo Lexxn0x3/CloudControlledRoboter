@@ -31,10 +31,10 @@ class RobotController:
         if object_x < abs(target_x - tolerance_x)  or object_x > abs(target_x + tolerance_x):
             final_x = False  # Reset final_x if the x-coordinate is outside tolerance
             if object_x < (target_x - tolerance_x):
-                self.bot.spin_left(15)
+                self.bot.spin_left(25)
                 print("spin left")
             else:
-                self.bot.spin_right(15)
+                self.bot.spin_right(25)
                 print("spin right")
         
         if object_y >= abs(target_y - tolerance_y)  and object_y <= abs(target_y + tolerance_y) and final_x is True and not final_y:
@@ -54,7 +54,7 @@ class RobotController:
         if final_x and final_y:
             print("ready to shoot")
             self.bot.send_laser_data(True)
-            time.sleep(3)
+            time.sleep(10)
             self.bot.send_laser_data(False)
             
 
