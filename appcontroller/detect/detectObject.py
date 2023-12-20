@@ -65,7 +65,7 @@ class RobotController:
             #print(result.boxes[0].orig_shape[1])
             if result.boxes and result.boxes[0] and result.boxes[0].xyxy is not None:
                 target_x = int(result.boxes[0].orig_shape[1] * 50 / 100)
-                target_y = int(result.boxes[0].orig_shape[0] * 70 / 100)
+                target_y = int(result.boxes[0].orig_shape[0] * 60 / 100)
 
                 tolerance_x = int(result.boxes[0].orig_shape[1] * 2 / 100)
                 tolerance_y = int(result.boxes[0].orig_shape[0] * 2 / 100)
