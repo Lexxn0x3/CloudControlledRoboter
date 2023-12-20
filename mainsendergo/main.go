@@ -119,7 +119,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 	lastHealthCheckActive := healthCheckActive
 
 	var lastTimestamp int64
-	timer := time.NewTimer(200 * time.Millisecond)
+	timer := time.NewTimer(300 * time.Millisecond)
 	log(INFO, "Health check routine started")
 
 	for {
@@ -134,7 +134,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 			lastHealthCheckActive = healthCheckActive
 			healthCheckActive = true
 			if lastHealthCheckActive != healthCheckActive {
-				timer.Reset(200 * time.Millisecond)
+				timer.Reset(300 * time.Millisecond)
 			}
 
 			if strings.HasPrefix(msg, "healthcheck") {
@@ -155,7 +155,7 @@ func handleHealthcheck(wg *sync.WaitGroup) {
 				lastTimestamp = timestamp
 				//logWithTimestamp("Health check passed")
 				rosmaster.BlockedHealthcheck = false
-				timer.Reset(200 * time.Millisecond)
+				timer.Reset(300 * time.Millisecond)
 			}
 		case <-stopChan:
 			log(INFO, "Health check routine stopped")
