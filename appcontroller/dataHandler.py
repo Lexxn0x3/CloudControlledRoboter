@@ -37,7 +37,7 @@ class DataHandler():
     async def handle_detection_system(self, data):
         state = data.get("detect", False)
         if state:
-                self.robot_controller = RobotController(self)
+                self.robot_controller = RobotController(self.bot)
                 self.robot_controller.run()
         else:
             self.robot_controller = None
