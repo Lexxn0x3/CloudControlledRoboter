@@ -23,7 +23,7 @@ class RobotController:
         final_x = False
         final_y = False
 
-        if object_x >= abs(target_x - tolerance_x)  and object_x <= abs(target_x + tolerance_x) and not final_x:
+        if object_x >= abs(target_x - tolerance_x)  and object_x <= abs(target_x + tolerance_x) and final_x:
             self.bot.stop()
             print("stop")
             final_x = True
@@ -37,12 +37,12 @@ class RobotController:
                 self.bot.spin_right(25)
                 print("spin right")
         
-        if object_y >= abs(target_y - tolerance_y)  and object_y <= abs(target_y + tolerance_y) and final_x is True and not final_y:
+        if object_y >= abs(target_y - tolerance_y)  and object_y <= abs(target_y + tolerance_y) and final_x and not final_y:
             self.bot.stop()
             print("stop")
             final_y = True
 
-        if object_y < abs(target_y - tolerance_y)  or object_y > abs(target_y + tolerance_y) and final_x is True:
+        if object_y < abs(target_y - tolerance_y)  or object_y > abs(target_y + tolerance_y) and final_x:
             final_y = False  # Reset final_y if the y-coordinate is outside tolerance
             if object_y < (target_y - tolerance_y):
                 self.bot.drive_forward(15)
