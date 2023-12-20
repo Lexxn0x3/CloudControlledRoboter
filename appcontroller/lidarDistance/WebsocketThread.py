@@ -45,7 +45,7 @@ class WebSocketClientThread(threading.Thread):
         except KeyboardInterrupt:
             print("Stopping")
     
-    def send_data_to_app_handler(self):
+    def send_data_to_app_handler():
 
         data_to_send = {
             "type": "stop_Flag",
