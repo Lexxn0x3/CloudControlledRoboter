@@ -30,7 +30,7 @@ class WebSocketClientThread(threading.Thread):
                     or self.globals.stop_back != last_flags["stop_back"]
                 ):
                     # Send data to the app handler when stop flags change
-                    self.send_data_to_app_handler(self)
+                    self.send_data_to_app_handler()
 
                     # Update the last_flags dictionary
                     last_flags = {
@@ -45,7 +45,7 @@ class WebSocketClientThread(threading.Thread):
         except KeyboardInterrupt:
             print("Stopping")
     
-    def send_data_to_app_handler():
+    def send_data_to_app_handler(self):
 
         data_to_send = {
             "type": "stop_Flag",
