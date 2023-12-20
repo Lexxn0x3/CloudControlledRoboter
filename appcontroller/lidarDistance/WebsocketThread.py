@@ -54,7 +54,7 @@ class WebSocketClientThread(threading.Thread):
             "stop_front_right": self.globals.stop_front_right,
         }
         print(data_to_send)
-        uri = f"ws://{self.ip_address}:{self.app_handler_port}"
+        uri = f"ws://127.0.0.1:{self.app_handler_port}"
         print("sending", flush= True)
         async def send_data():
             async with websockets.connect(uri) as websocket:
