@@ -16,7 +16,7 @@ class WebSocketClientThread(threading.Thread):
     def run(self):
         
         try:
-            last_flags = {"stop_front": False, "stop_left": False, "stop_right": False, "stop_front_left": False, "stop_front_right": False, "stop_back": False}
+            last_flags = {"stop_front": False, "stop_left": False, "stop_right": False, "stop_front_left": False, "stop_front_right": False}
             
             while not self.globals.stop_threads:
                 time.sleep(0.01)  # Adjust sleep time as needed
@@ -27,7 +27,6 @@ class WebSocketClientThread(threading.Thread):
                     or self.globals.stop_right != last_flags["stop_right"]
                     or self.globals.stop_front_left != last_flags["stop_front_left"]
                     or self.globals.stop_front_right != last_flags["stop_front_right"]
-                    or self.globals.stop_back != last_flags["stop_back"]
                 ):
                     # Send data to the app handler when stop flags change
                     self.send_data_to_app_handler()
@@ -39,7 +38,6 @@ class WebSocketClientThread(threading.Thread):
                         "stop_right": self.globals.stop_right,
                         "stop_front_left": self.globals.stop_front_left,
                         "stop_front_right": self.globals.stop_front_right,
-                        "stop_back": self.globals.stop_back
                     }
 
         except KeyboardInterrupt:
@@ -54,7 +52,6 @@ class WebSocketClientThread(threading.Thread):
             "stop_right": self.globals.stop_right,
             "stop_front_left": self.globals.stop_front_left,
             "stop_front_right": self.globals.stop_front_right,
-            "stop_back": self.globals.stop_back
         }
         print(data_to_send)
         uri = f"ws://{self.ip_address}:{self.app_handler_port}"

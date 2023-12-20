@@ -102,12 +102,12 @@ class DistanceSenderThread(threading.Thread):
                 front_right_D = distance
 
             #check_back
-            if 160 <= angle <= 200:
-                if distance <= self.globals.minDist:
-                    self.globals.stop_back = True
-                else:
-                    self.globals.stop_back = False
-                back_D = distance
+            #if 160 <= angle <= 200:
+            #    if distance <= self.globals.minDist:
+            #        self.globals.stop_back = True
+            #    else:
+            #        self.globals.stop_back = False
+            #    back_D = distance
                     
         
         return left_D or 10000, front_D or 10000, right_D or 10000, front_left_D or 10000, front_right_D or 10000, back_D or 10000

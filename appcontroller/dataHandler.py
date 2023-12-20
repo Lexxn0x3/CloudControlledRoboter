@@ -51,9 +51,8 @@ class DataHandler():
         self.stopRight = data.get("stop_right", False)
         self.stopFrontLeft = data.get("stop_front_left", False)
         self.stopFrontRight = data.get("stop_front_right", False)
-        self.stopBack = data.get("stop_back", False)
 
-        if any([self.stopFront, self.stopFrontLeft, self.stopFrontRight, self.stopLeft, self.stopRight, self.stopBack]) == True:
+        if any([self.stopFront, self.stopFrontLeft, self.stopFrontRight, self.stopLeft, self.stopRight]) == True:
             self.bot.stop()
 
 
