@@ -1,0 +1,26 @@
+name: Mirror to GitLab
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - '.github/**'
+  delete:
+    paths-ignore:
+      - '.github/**'
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Sync to GitLab
+      uses: adambirds/sync-github-to-gitlab-action@v1.1.0
+      with:
+        destination_repository: git@code.siemens.com:robotgroup1/mainproject.git
+        destination_branch_name: main
+        destination_ssh_key: ${{ secrets.GITLAB_SSH_KEY }}
