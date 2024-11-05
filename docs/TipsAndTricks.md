@@ -74,3 +74,13 @@ For testing in a Linux environment, there are two recommended options:
 ### Sharing Project Folders in VMware
 In VMware Player and Workstation, you can easily share your project files between the host and the Linux VM. To do this, add a shared folder in the VM settings. Then, in the VM, execute the following command to mount the shared folder: `sudo vmhgfs-fuse .host:/ /mnt/hgfs/ -o allow_other -o uid=1000`
 The mounted shared folder will be accessible in the `/mnt/hgfs` directory of your Linux VM, allowing for seamless file sharing and collaboration between your host and the VM.
+
+### GPIO Pin Mapping for NVIDIA Jetson Nano
+When working with GPIO pins on the NVIDIA Jetson Nano, it's important to note that the Sysfs GPIO numbering doesn't always correspond directly to the physical pin numbers on the board. For example:
+
+- GPIO13 is actually mapped to GPIO14 in the Sysfs system.
+- The Sysfs GPIO number corresponds to the pin number on the J41 header of the Jetson Nano.
+
+For accurate pin mapping and more detailed information, refer to the [Jetson Nano J41 header pinout diagram](https://jetsonhacks.com/nvidia-jetson-nano-j41-header-pinout/).
+
+When programming GPIO interactions, always use the Sysfs GPIO number, not the physical pin number on the board. This ensures correct addressing of the desired GPIO pin in your software.
